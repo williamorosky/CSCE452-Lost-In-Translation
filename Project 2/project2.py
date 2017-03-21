@@ -146,6 +146,12 @@ def setupButtons(screen, buttons):
     rotate_cw_3 = screen.blit(buttons[1], (107, 323))
     screen.blit(buttons[6], (42, 418))
     
+    """Currently just placing images, turning into buttons later."""
+    screen.blit(buttons[2], (590, 133))
+    screen.blit(buttons[4], (660, 133))
+    screen.blit(buttons[3], (590, 228))
+    screen.blit(buttons[5], (660, 228))
+    
     surface = pg.Surface((50,50))
     surface = surface.convert_alpha()
     surface.fill(DARKGREY)
@@ -172,9 +178,9 @@ def initialize():
     rotate_cw = pg.image.load("images/rotatecw.png").convert_alpha()
     rotate_cw = pg.transform.scale(rotate_cw, (50,50))
 
-    plus_x = pg.image.load("images/minusx.png").convert_alpha()
+    plus_x = pg.image.load("images/plusx.png").convert_alpha()
     plus_x = pg.transform.scale(plus_x, (50,50))
-    plus_y = pg.image.load("images/minusy.png").convert_alpha()
+    plus_y = pg.image.load("images/plusy.png").convert_alpha()
     plus_y = pg.transform.scale(plus_y, (50,50))
     minus_x = pg.image.load("images/minusx.png").convert_alpha()
     minus_x = pg.transform.scale(minus_x, (50,50))
@@ -287,7 +293,7 @@ if __name__ == "__main__":
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
             elif rotation_buttons[4].collidepoint(pos):
-                green_arm.rotateCW()
+                green_arm.rotateCCW()
 
             elif rotation_buttons[5].collidepoint(pos):
                 green_arm.rotateCW()
