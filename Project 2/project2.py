@@ -122,10 +122,26 @@ class Joint(pg.sprite.DirtySprite):
     
     def X_plus(self):
         """
-        Ignore this right now, doing maths. 
-        dx = self.rect.center[0] - self.pivot_point[0]
-        dy = self.rect.center[1] - self.pivot_point[1]
-        self.end_point = list((self.rect.center[0]+dx+1, self.rect.center[1]+dy))
+        INVERSE KINE. CALCULATIONS. Find way to implement into code 
+        l1 =150, l2 =100, l3 =75
+        theta1 = degree of link 1
+        theta2 = degree of link 2
+        alpha = degree of link 3
+        //location of endpoint of last link
+        
+        yellow_arm.end_point[0] = x
+        yellow_arm.end_point[1] = y
+
+        yellow_arm.angle = alpha
+
+        x_0 = l1*cos(alpha)
+        y_0 = l1*sin(alpha)
+        theta2 = acos( (x_0^2 + y_0^2 - l1^2 + l2^2) / (2 * l1 * l2) )
+
+        gamma = acos( (x_0^2 + y_0^2 - l1^2 + l2^2) / (2 * l1 * sqrt(x_0^2 + y_0^2)) ) 
+        beta = atan( y_0 / x_0)
+        theta1 = beta - gamma
+
         """
 
     def update_end_point(self):
