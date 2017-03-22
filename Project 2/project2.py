@@ -146,22 +146,25 @@ def setupButtons(screen, buttons):
     rotate_cw_3 = screen.blit(buttons[1], (107, 323))
     screen.blit(buttons[6], (42, 418))
     
-    """Currently just placing images, turning into buttons later."""
-    screen.blit(buttons[2], (590, 133))
-    screen.blit(buttons[4], (660, 133))
-    screen.blit(buttons[3], (590, 228))
-    screen.blit(buttons[5], (660, 228))
+    #Currently just placing images, turning into buttons later.
+    plus_x = screen.blit(buttons[2], (590, 133)); #plus_x
+    minus_x = screen.blit(buttons[4], (660, 133)); #minus_x
+    plus_y = screen.blit(buttons[3], (590, 228)); #plus_y
+    minus_y = screen.blit(buttons[5], (660, 228)); #minus_y
     
     surface = pg.Surface((50,50))
     surface = surface.convert_alpha()
     surface.fill(DARKGREY)
-    pg.draw.circle(surface, BLACK, (25, 25), 25)
+    pg.draw.circle(surface, paint_color, (25, 25), 25)
     pg.draw.circle(surface, paint_color, (25, 25), 23)
     screen.blit(surface, (107, 418))
 
-    rotation_buttons = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
+    button_list = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
 
-    return rotation_buttons
+    translate_buttons = [plus_x, minus_x, plus_y, minus_y]
+
+    buttons_setup = button_list + translate_buttons
+    return buttons_setup
 
 
 def initialize():
@@ -253,7 +256,7 @@ if __name__ == "__main__":
             
         yellow_arm.update_end_point()
 
-        pg.draw.circle(surface,BLACK,yellow_arm.end_point, 10)
+        pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
 
         screen.fill(LIGHTBLUE)
         canvas_surface.fill(WHITE)
@@ -270,33 +273,36 @@ if __name__ == "__main__":
             else:
                 screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)-(height/2)))
 
-        rotation_buttons = setupButtons(screen, buttons)
+        button_list = setupButtons(screen, buttons)
         mouse = pg.mouse.get_pressed()
         pos = pg.mouse.get_pos()
         if mouse[0]:
-            if rotation_buttons[0].collidepoint(pos):
+            if button_list[0].collidepoint(pos):
                 yellow_arm.rotateCCW()
                 purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
-            elif rotation_buttons[1].collidepoint(pos):
+            elif button_list[1].collidepoint(pos):
                 yellow_arm.rotateCW()
                 purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
-            elif rotation_buttons[2].collidepoint(pos):
+            elif button_list[2].collidepoint(pos):
                 purple_arm.rotateCCW()
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
-            elif rotation_buttons[3].collidepoint(pos):
+            elif button_list[3].collidepoint(pos):
                 purple_arm.rotateCW()
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
-            elif rotation_buttons[4].collidepoint(pos):
+            elif button_list[4].collidepoint(pos):
                 green_arm.rotateCCW()
 
-            elif rotation_buttons[5].collidepoint(pos):
+            elif button_list[5].collidepoint(pos):
                 green_arm.rotateCW()
+
+            elif button_list[6].collidepoint(pos):
+                green_arm.set
 
         pg.display.flip()
 
