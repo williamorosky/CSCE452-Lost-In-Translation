@@ -162,10 +162,10 @@ def setupButtons(screen, buttons):
     surface.fill(DARKGREY)
     pg.draw.circle(surface, BLACK, (25, 25), 25)
     pg.draw.circle(surface, paint_color, (25, 25), 23)
-    screen.blit(surface, (107, 418))
+    paint_select= screen.blit(surface, (107, 418))
 
     rotation_buttons = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
-    paint_buttons = [paint, screen]
+    paint_buttons = [paint, paint_select]
 
     return rotation_buttons, paint_buttons
 
@@ -309,8 +309,7 @@ if __name__ == "__main__":
             elif rotation_buttons[5].collidepoint(pos):
                 green_arm.rotateCW()
 
-            elif paint_buttons[1].get_rect().collidepoint(pos):
-                
+            elif paint_buttons[1].collidepoint(pos):
                 setDrawColor()
 
         pg.display.flip()
