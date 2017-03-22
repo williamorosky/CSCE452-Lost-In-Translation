@@ -2,6 +2,7 @@ import sys
 import math
 import pygame as pg
 from Tkinter import *
+from tkFileDialog import askopenfilename
 from tkColorChooser import askcolor
 
 # set up the colors
@@ -22,6 +23,10 @@ rotation_speed = 1
 paint_color = WHITE
 
 paint_on = True
+image_attached = False
+
+global image_to_draw
+scaled_down_image = pg.image.load("images/whitesquare.png")
 
 root = Tk()
 root.mainloop()
@@ -182,6 +187,14 @@ def setDrawColor():
         global paint_color
         paint_color = RGB
 
+def setImageToDraw(screen):
+    file_name = askopenfilename() 
+    print(file_name)
+    image_to_draw = pg.image.load(file_name).convert_alpha()
+    global scaled_down_image
+    scaled_down_image = pg.transform.scale(image_to_draw, (40,40))
+    screen.blit(scaled_down_image, (650,387))
+
 def initialize():
 
     base = pg.image.load("images/base.png").convert_alpha()
@@ -272,7 +285,7 @@ if __name__ == "__main__":
         yellow_arm.update_end_point()
 
         if paint_on:
-            pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
+            pg.draw.circle(surface,paint_color,yellow_arm.end_point, 1)
 
         screen.fill(LIGHTBLUE)
         canvas_surface.fill(WHITE)
@@ -280,6 +293,9 @@ if __name__ == "__main__":
 
         allsprites.update()
         allsprites.draw(screen)
+        myfont = pg.font.SysFont("Roboto-Bold", 40)
+        label = myfont.render("roBOB ROSS", 1, WHITE)
+        screen.blit(label, (295, 22))
 
         for i, image in enumerate(images):
             width = image.get_rect().width
@@ -290,6 +306,16 @@ if __name__ == "__main__":
                 screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)-(height/2)))
 
         rotation_buttons, paint_buttons = setupButtons(screen, buttons)
+
+        myfont = pg.font.SysFont("Roboto", 14)
+        global image_button
+        if not image_attached:
+            label = myfont.render("Upload", 1, WHITE)
+            image_button = screen.blit(label, (628, 434))
+        else:
+            label = myfont.render("Paint It!", 1, WHITE)
+            image_button = screen.blit(label, (622, 434))
+
         mouse = pg.mouse.get_pressed()
         pos = pg.mouse.get_pos()
         if mouse[0]:
@@ -319,14 +345,23 @@ if __name__ == "__main__":
 
             elif paint_buttons[0].collidepoint(pos):
                 if paint_on:
-                   # global paint_on
                     paint_on = False
                 else:
-                    #global paint_on
                     paint_on = True
 
             elif paint_buttons[1].collidepoint(pos):
                 setDrawColor()
+
+            elif image_button.collidepoint(pos):
+                if image_attached:
+                    image_attached = False
+                else:
+                    setImageToDraw(screen)
+                    image_attached = True
+
+        if image_attached:
+            scaled_down_image = pg.transform.scale(scaled_down_image, (50,50))
+            screen.blit(scaled_down_image, (624,360))
 
         pg.display.flip()
 
