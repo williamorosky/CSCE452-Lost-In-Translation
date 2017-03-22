@@ -21,6 +21,8 @@ CANVAS_WIDTH_HEIGHT = 350
 rotation_speed = 1
 paint_color = WHITE
 
+paint_on = True
+
 root = Tk()
 root.mainloop()
 
@@ -149,8 +151,13 @@ def setupButtons(screen, buttons):
     rotate_cw_2 = screen.blit(buttons[1], (107, 228))
     rotate_ccw_3 = screen.blit(buttons[0], (42, 323))
     rotate_cw_3 = screen.blit(buttons[1], (107, 323))
+
     paint = screen.blit(buttons[6], (42, 418))
-    
+    if paint_on:
+        paint = screen.blit(buttons[6], (42, 418))
+    else:
+        paint = screen.blit(buttons[7], (42, 418))
+
     """Currently just placing images, turning into buttons later."""
     screen.blit(buttons[2], (590, 133))
     screen.blit(buttons[4], (660, 133))
@@ -264,7 +271,8 @@ if __name__ == "__main__":
             
         yellow_arm.update_end_point()
 
-        pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
+        if paint_on:
+            pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
 
         screen.fill(LIGHTBLUE)
         canvas_surface.fill(WHITE)
@@ -308,6 +316,14 @@ if __name__ == "__main__":
 
             elif rotation_buttons[5].collidepoint(pos):
                 green_arm.rotateCW()
+
+            elif paint_buttons[0].collidepoint(pos):
+                if paint_on:
+                   # global paint_on
+                    paint_on = False
+                else:
+                    #global paint_on
+                    paint_on = True
 
             elif paint_buttons[1].collidepoint(pos):
                 setDrawColor()
