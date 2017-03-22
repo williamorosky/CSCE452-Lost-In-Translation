@@ -119,6 +119,14 @@ class Joint(pg.sprite.DirtySprite):
                 new_link_center = self.link_link_rotator(self.angle, self.pivot_point)
                 link.linkedJoint.rect = link.linkedJoint.image.get_rect(center=new_link_center)
                 link.rotateLinkCW()
+    
+    def X_plus(self):
+        """
+        Ignore this right now, doing maths. 
+        dx = self.rect.center[0] - self.pivot_point[0]
+        dy = self.rect.center[1] - self.pivot_point[1]
+        self.end_point = list((self.rect.center[0]+dx+1, self.rect.center[1]+dy))
+        """
 
     def update_end_point(self):
         dx = self.rect.center[0] - self.pivot_point[0]
@@ -147,10 +155,10 @@ def setupButtons(screen, buttons):
     screen.blit(buttons[6], (42, 418))
     
     """Currently just placing images, turning into buttons later."""
-    screen.blit(buttons[2], (590, 133))
-    screen.blit(buttons[4], (660, 133))
-    screen.blit(buttons[3], (590, 228))
-    screen.blit(buttons[5], (660, 228))
+    X_pos_plus = screen.blit(buttons[2], (590, 133))
+    X_pos_minus = screen.blit(buttons[4], (660, 133))
+    Y_pos_plus = screen.blit(buttons[3], (590, 228))
+    Y_pos_minus = screen.blit(buttons[5], (660, 228))
     
     surface = pg.Surface((50,50))
     surface = surface.convert_alpha()
@@ -159,7 +167,7 @@ def setupButtons(screen, buttons):
     pg.draw.circle(surface, paint_color, (25, 25), 23)
     screen.blit(surface, (107, 418))
 
-    rotation_buttons = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
+    rotation_buttons = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3, X_pos_plus, X_pos_minus, Y_pos_plus, Y_pos_minus]
 
     return rotation_buttons
 
@@ -297,6 +305,20 @@ if __name__ == "__main__":
 
             elif rotation_buttons[5].collidepoint(pos):
                 green_arm.rotateCW()
+            
+            elif rotation_buttons[6].collidepoint(pos):
+                yellow_arm.X_plus()
+            """
+            elif rotation_buttons[7].collidepoint(pos):
+                green_arm.rotateCW()
+
+            elif rotation_buttons[8].collidepoint(pos):
+                green_arm.rotateCW()
+            
+            elif rotation_buttons[9].collidepoint(pos):
+                green_arm.rotateCW()
+            """
+
 
         pg.display.flip()
 
