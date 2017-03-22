@@ -1,6 +1,8 @@
 import sys
 import math
 import pygame as pg
+from Tkinter import *
+from tkColorChooser import askcolor
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -18,6 +20,9 @@ CANVAS_WIDTH_HEIGHT = 350
 
 rotation_speed = 1
 paint_color = WHITE
+
+root = Tk()
+root.mainloop()
 
 class Rotator(object):
     def __init__(self,center,origin,image_angle=0):
@@ -144,7 +149,7 @@ def setupButtons(screen, buttons):
     rotate_cw_2 = screen.blit(buttons[1], (107, 228))
     rotate_ccw_3 = screen.blit(buttons[0], (42, 323))
     rotate_cw_3 = screen.blit(buttons[1], (107, 323))
-    screen.blit(buttons[6], (42, 418))
+    paint = screen.blit(buttons[6], (42, 418))
     
     """Currently just placing images, turning into buttons later."""
     screen.blit(buttons[2], (590, 133))
@@ -160,9 +165,15 @@ def setupButtons(screen, buttons):
     screen.blit(surface, (107, 418))
 
     rotation_buttons = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
+    paint_buttons = [paint, screen]
 
-    return rotation_buttons
+    return rotation_buttons, paint_buttons
 
+def setDrawColor():
+    (RGB, hexstr) = askcolor()
+    if RGB:
+        global paint_color
+        paint_color = RGB
 
 def initialize():
 
@@ -253,7 +264,7 @@ if __name__ == "__main__":
             
         yellow_arm.update_end_point()
 
-        pg.draw.circle(surface,BLACK,yellow_arm.end_point, 10)
+        pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
 
         screen.fill(LIGHTBLUE)
         canvas_surface.fill(WHITE)
@@ -270,7 +281,7 @@ if __name__ == "__main__":
             else:
                 screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)-(height/2)))
 
-        rotation_buttons = setupButtons(screen, buttons)
+        rotation_buttons, paint_buttons = setupButtons(screen, buttons)
         mouse = pg.mouse.get_pressed()
         pos = pg.mouse.get_pos()
         if mouse[0]:
@@ -297,6 +308,10 @@ if __name__ == "__main__":
 
             elif rotation_buttons[5].collidepoint(pos):
                 green_arm.rotateCW()
+
+            elif paint_buttons[1].get_rect().collidepoint(pos):
+                
+                setDrawColor()
 
         pg.display.flip()
 
