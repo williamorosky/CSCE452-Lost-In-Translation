@@ -63,6 +63,17 @@ class Joint(pg.sprite.DirtySprite):
         if self.linkedJoint.hasLink:
                 self.link_link_rotator = Rotator(self.linkedJoint.linkedJoint.rect.center, point, self.angle)
 
+    def rotate(self):
+        new_center = self.pivot_rotator(self.angle, self.pivot_point)
+        self.image = pg.transform.rotate(self.original_image, self.angle)
+        self.rect = self.image.get_rect(center=new_center)
+        if self.hasLink:
+            self.update_end_point()
+            self.linkedJoint.set_pivot_point((self.end_point[0], self.end_point[1]))
+            new_link_center = self.link_rotator(self.angle, self.pivot_point)
+            self.linkedJoint.rect = self.linkedJoint.image.get_rect(center=new_link_center)
+            self.rotateLinkCW()
+
     def rotateCCW(self):
         self.speed_ang = abs(rotation_speed)
         if self.speed_ang:
@@ -129,11 +140,15 @@ class Joint(pg.sprite.DirtySprite):
         x = self.end_point[0]+1
         y = self.end_point[1]
 
+        print(self.end_point)
+        print((x,y))
+        # self.end_point = [x,y]
+
         alpha = math.atan2(y,x)   
 
-        theta2 = math.acos( (math.pow(x, 2) + math.pow(y, 2) - math.pow(l1, 2) + math.pow(l2, 2)) / (2 * l1 * l2) )
+        theta2 = math.acos(math.radians((math.pow(x, 2) + math.pow(y, 2) - math.pow(l1, 2) + math.pow(l2, 2)) / (2 * l1 * l2)))
 
-        gamma = math.acos( (math.pow(x, 2) + math.pow(y, 2) - math.pow(l1, 2) + math.pow(l2, 2)) / (2 * l1 * math.sqrt(math.pow(x, 2) + math.pow(y, 2))) ) 
+        gamma = math.acos(math.radians((math.pow(x, 2) + math.pow(y, 2) - math.pow(l1, 2) + math.pow(l2, 2)) / (2 * l1 * math.sqrt(math.pow(x, 2) + math.pow(y, 2))))) 
         theta1 = alpha - gamma 
         return [alpha, theta1, theta2]                
         #need to rotate link 1 to theta1 and link 2 to theta 2.
@@ -274,6 +289,10 @@ if __name__ == "__main__":
         yellow_arm.update_end_point()
 
         pg.draw.circle(surface,BLACK,yellow_arm.end_point, 10)
+        pg.draw.circle(surface,(255,0,0),yellow_arm.pivot_point, 10)
+        pg.draw.circle(surface,(255,255,0),green_arm.pivot_point, 10)
+        pg.draw.circle(surface,(255,0,255),purple_arm.pivot_point, 10)
+
 
         screen.fill(LIGHTBLUE)
         canvas_surface.fill(WHITE)
@@ -320,13 +339,51 @@ if __name__ == "__main__":
             
             elif rotation_buttons[6].collidepoint(pos):
                 angles = yellow_arm.X_plus()
-                while green_arm.angle != angles[0]:
-                    green_arm.rotateCW()
-                while purple_arm.angle != angles[1]:
-                    purple_arm.rotateCW()
-                while yellow_arm.angle != angles[2]:
-                    yellow_arm.rotateCW()
+                # print "Current Angles" 
+                # print "Yellow: " + str(yellow_arm.angle)
+                # print "Purple: " + str(purple_arm.angle)
+                # print "Green: " + str(green_arm.angle)
 
+                print "New Angles" 
+                print "Yellow: " + str(angles[2])
+                print "Purple: " + str(angles[1])
+                print "Green: " + str(angles[0])
+
+
+                green_arm.angle -= angles[0]
+                green_arm.rotate()
+
+                # green_arm.update_end_point()
+                # purple_arm.set_pivot_point((green_arm.end_point[0], green_arm.end_point[1]))
+                # purple_arm.update_end_point()
+                # yellow_arm.set_pivot_point((purple_arm.end_point[0], purple_arm.end_point[1]))
+
+                # purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
+                # green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+                                    
+                purple_arm.angle -= angles[1]
+                purple_arm.rotate()
+
+                yellow_arm.angle -= angles[2]
+                yellow_arm.rotate()
+
+                # green_arm.update_end_point()
+                # purple_arm.set_pivot_point((green_arm.end_point[0], green_arm.end_point[1]))
+                # purple_arm.update_end_point()
+                # yellow_arm.set_pivot_point((purple_arm.end_point[0], purple_arm.end_point[1]))
+
+                # green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+
+                
+
+                # green_arm.update_end_point()
+                # purple_arm.set_pivot_point((green_arm.end_point[0], green_arm.end_point[1]))
+                # purple_arm.update_end_point()
+                # yellow_arm.set_pivot_point((purple_arm.end_point[0], purple_arm.end_point[1]))
+
+
+
+                
 
             """
             elif rotation_buttons[7].collidepoint(pos):
