@@ -298,6 +298,14 @@ if __name__ == "__main__":
         canvas_surface.fill(WHITE)
         screen.blit(surface, (0,0))
 
+        myfont = pg.font.SysFont("Roboto-Bold", 40)
+        label = myfont.render("roBOB ROSS", 1, WHITE)
+        screen.blit(label, (295, 22))
+
+        myfont = pg.font.SysFont("Roboto", 20)
+        label = myfont.render("A happy little mistake", 1, WHITE)
+        screen.blit(label, (285, 500))
+
         allsprites.update()
         allsprites.draw(screen)
 
