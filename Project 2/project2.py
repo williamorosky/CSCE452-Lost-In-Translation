@@ -302,7 +302,7 @@ if __name__ == "__main__":
                 green_arm.rotateCW()
 
             elif button_list[6].collidepoint(pos):
-                green_arm.set
+                """green_arm.set"""
 
         pg.display.flip()
 
