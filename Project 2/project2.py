@@ -126,15 +126,19 @@ class Joint(pg.sprite.DirtySprite):
         l2 = (SCREEN_HEIGHT/2)+82.5
         l3 = (SCREEN_HEIGHT/2)+82.5
 
-        x = this.end_point[0] + 1
-        y = this.end_point[1]
+        x = self.end_point[0]+1
+        y = self.end_point[1]
 
-        alpha = atan2( y, x)   
+        alpha = math.atan2(y,x)   
 
-        theta2 = acos( (pow(x, 2) + pow(y, 2) - pow(l1, 2) + pow(l2, 2)) / (2 * l1 * l2) )
+        theta2 = math.acos( (math.pow(x, 2) + math.pow(y, 2) - math.pow(l1, 2) + math.pow(l2, 2)) / (2 * l1 * l2) )
 
-        gamma = acos( (pow(x, 2) + pow(y, 2) - pow(l1, 2) + pow(l2, 2)) / (2 * l1 * sqrt(pow(x, 2) + pow(y, 2))) ) 
-        theta1 = alpha - gamma                              
+        gamma = math.acos( (math.pow(x, 2) + math.pow(y, 2) - math.pow(l1, 2) + math.pow(l2, 2)) / (2 * l1 * math.sqrt(math.pow(x, 2) + math.pow(y, 2))) ) 
+        theta1 = alpha - gamma 
+        return [alpha, theta1, theta2]                
+        #need to rotate link 1 to theta1 and link 2 to theta 2.
+        #link 3 need to be at alpha. 
+        # if this works then we can essentially c+p this over to X_minus, Y_plus, y_minus             
 
     def update_end_point(self):
         dx = self.rect.center[0] - self.pivot_point[0]
@@ -315,7 +319,15 @@ if __name__ == "__main__":
                 green_arm.rotateCW()
             
             elif rotation_buttons[6].collidepoint(pos):
-                yellow_arm.X_plus()
+                angles = yellow_arm.X_plus()
+                while green_arm.angle != angles[0]:
+                    green_arm.rotateCW()
+                while purple_arm.angle != angles[1]:
+                    purple_arm.rotateCW()
+                while yellow_arm.angle != angles[2]:
+                    yellow_arm.rotateCW()
+
+
             """
             elif rotation_buttons[7].collidepoint(pos):
                 green_arm.rotateCW()
