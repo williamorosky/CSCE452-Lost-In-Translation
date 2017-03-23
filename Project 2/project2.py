@@ -121,28 +121,20 @@ class Joint(pg.sprite.DirtySprite):
                 link.rotateLinkCW()
     
     def X_plus(self):
-        """
-        INVERSE KINE. CALCULATIONS. Find way to implement into code 
-        l1 =150, l2 =100, l3 =75
-        theta1 = degree of link 1
-        theta2 = degree of link 2
-        alpha = degree of link 3
-        //location of endpoint of last link
-        
-        yellow_arm.end_point[0] = x
-        yellow_arm.end_point[1] = y
 
-        yellow_arm.angle = alpha
+        l1 = (SCREEN_HEIGHT/2)+82.5
+        l2 = (SCREEN_HEIGHT/2)+82.5
+        l3 = (SCREEN_HEIGHT/2)+82.5
 
-        x_0 = l1*cos(alpha)
-        y_0 = l1*sin(alpha)
-        theta2 = acos( (x_0^2 + y_0^2 - l1^2 + l2^2) / (2 * l1 * l2) )
+        x = this.end_point[0] + 1
+        y = this.end_point[1]
 
-        gamma = acos( (x_0^2 + y_0^2 - l1^2 + l2^2) / (2 * l1 * sqrt(x_0^2 + y_0^2)) ) 
-        beta = atan( y_0 / x_0)
-        theta1 = beta - gamma
+        alpha = atan2( y, x)   
 
-        """
+        theta2 = acos( (pow(x, 2) + pow(y, 2) - pow(l1, 2) + pow(l2, 2)) / (2 * l1 * l2) )
+
+        gamma = acos( (pow(x, 2) + pow(y, 2) - pow(l1, 2) + pow(l2, 2)) / (2 * l1 * sqrt(pow(x, 2) + pow(y, 2))) ) 
+        theta1 = alpha - gamma                              
 
     def update_end_point(self):
         dx = self.rect.center[0] - self.pivot_point[0]
