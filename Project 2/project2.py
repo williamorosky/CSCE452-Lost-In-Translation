@@ -1,6 +1,7 @@
 import sys
 import math
 import pygame as pg
+import numpy as np
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -62,6 +63,40 @@ class Joint(pg.sprite.DirtySprite):
         self.link_rotator = Rotator(self.linkedJoint.rect.center, point, self.angle)
         if self.linkedJoint.hasLink:
                 self.link_link_rotator = Rotator(self.linkedJoint.linkedJoint.rect.center, point, self.angle)
+
+    #for inverse kinematics
+    def inverse_kinematics(self, x4, y4, alpha):
+        L1 = self.links[0].length
+        L2 = self.links[1].length
+        L3 = self.links[2].length
+
+        print("x4: " + repr(x4))
+        print("y4: " + repr(y4))
+        print("alpha: " + repr(alpha))
+
+        #geometric attempt
+        theta3 = 180 - alpha
+
+        a2 = L3 ** 2 + L2 ** 2 - 2*L2*L3*np.cos(np.radians(alpha))
+        print("a2: " + repr(a2))
+
+        c2 = x4 ** 2 + y4 ** 2
+
+        phi = np.degrees(np.arccos(self.normalize((c2 - L2 ** 2 - a2)/(-2*L2*np.sqrt(a2)))))
+
+        b2 = L1 ** 2 + L2 ** 2 - 2*L1*L2*np.cos(np.radians(phi))
+
+        theta2 = 180 - phi
+
+        d1 = x4 - L2*np.cos(np.radians(90-theta2))-L3*np.cos(np.radians(theta3))
+
+        print("theta2: " + repr(theta2))
+        print("theta3: " + repr(theta3))
+        print("d1: " + repr(d1))
+
+        self.joints[0].rotate(d1 - self.joints[0].offset)
+        self.joints[1].rotate(theta2 - self.joints[1].theta)
+        self.joints[2].rotate(theta3 - self.joints[2].theta)
 
     def rotateCCW(self):
         self.speed_ang = abs(rotation_speed)
@@ -145,9 +180,10 @@ class Joint(pg.sprite.DirtySprite):
 		return c
 
     def computeJacobianTranspose(self):
-		dx,dy = self.end_point[0], self.end_point[1]
+		dx,dy = self.end_point
 		jt = []
 		js = self.cross((0, 0, 1), (dx, dy, 0));jt.append([js[0], js[1]])
+		jt.append([js[0], js[1]])
 		return jt
 
     def computeTargetVector(self, targetx, targety):
@@ -325,11 +361,26 @@ if __name__ == "__main__":
                 green_arm.rotateCW()
 
             elif button_list[6].collidepoint(pos): #plus x
-                ytv = yellow_arm.computeTargetVector(yellow_arm.end_point[0]+5, yellow_arm.end_point[1])
-                yjt = yellow_arm.computeJacobianTranspose()
-                yrv = yellow_arm.computeRotationVector(yjt,ytv)
-                pjt = purple_arm.computeJacobianTranspose()
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+                xjt = yellow_arm.computeJacobianTranspose()
+                xtv = yellow_arm.computeTargetVector(yellow_arm.end_point[0]+5, yellow_arm.end_point[1])
+                xrv = yellow_arm.computeRotationVector(xjt,xtv)
+
+
+            elif button_list[7].collidepoint(pos): #minus x
+                xjt = yellow_arm.computeJacobianTranspose()
+                xtv = yellow_arm.computeTargetVector(yellow_arm.end_point[0]-5, yellow_arm.end_point[1])
+                xrv = yellow_arm.computeRotationVector(xjt,xtv)
+
+            elif button_list[8].collidepoint(pos): #plus y
+                xjt = yellow_arm.computeJacobianTranspose()
+                xtv = yellow_arm.computeTargetVector(yellow_arm.end_point[0], yellow_arm.end_point[1]+5)
+                xrv = yellow_arm.computeRotationVector(xjt,xtv)
+            elif button_list[9].collidepoint(pos): #minus y
+                xjt = yellow_arm.computeJacobianTranspose()
+                xtv = yellow_arm.computeTargetVector(yellow_arm.end_point[0], yellow_arm.end_point[1]-5)
+                xrv = yellow_arm.computeRotationVector(xjt,xtv)
+
+
 
         pg.display.flip()
 
