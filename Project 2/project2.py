@@ -137,6 +137,29 @@ class Joint(pg.sprite.DirtySprite):
         self.linkedJoint = Joint
         self.hasLink = True
 
+    def cross(self, a, b):
+		c = [a[1]*b[2] - a[2]*b[1],
+			 a[2]*b[0] - a[0]*b[2],
+			 a[0]*b[1] - a[1]*b[0]]
+
+		return c
+
+    def computeJacobianTranspose(self):
+		dx,dy = self.end_point[0], self.end_point[1]
+		jt = []
+		js = self.cross((0, 0, 1), (dx, dy, 0));jt.append([js[0], js[1]])
+		return jt
+
+    def computeTargetVector(self, targetx, targety):
+        endx,endy = self.end_point[0], self.end_point[1]
+        return [targetx-endx, targety-endy]
+
+    def computeRotationVector(self, jacobianTranspose, targetVector):
+		rv = []
+		for row in jacobianTranspose:
+			rv.append(row[0]*targetVector[0] + row[1]*targetVector[1])
+		return rv
+
 def setupButtons(screen, buttons):
     rotate_ccw_1 = screen.blit(buttons[0], (42, 133))
     rotate_cw_1 = screen.blit(buttons[1], (107, 133))
@@ -301,8 +324,12 @@ if __name__ == "__main__":
             elif button_list[5].collidepoint(pos):
                 green_arm.rotateCW()
 
-            elif button_list[6].collidepoint(pos):
-                green_arm.set
+            elif button_list[6].collidepoint(pos): #plus x
+                ytv = yellow_arm.computeTargetVector(yellow_arm.end_point[0]+5, yellow_arm.end_point[1])
+                yjt = yellow_arm.computeJacobianTranspose()
+                yrv = yellow_arm.computeRotationVector(yjt,ytv)
+                pjt = purple_arm.computeJacobianTranspose()
+                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
         pg.display.flip()
 
