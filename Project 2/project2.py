@@ -1,6 +1,9 @@
 import sys
 import math
 import pygame as pg
+import time
+import threading
+import socket
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -18,6 +21,16 @@ CANVAS_WIDTH_HEIGHT = 350
 
 rotation_speed = 1
 paint_color = WHITE
+
+def SocketHandler(self):
+    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    #need messages for buttons, the buttons_list checking would probably work
+    
+    #data= recv(no idea how large bufsize should be)
+    #for delay, if true, sleep 2
+    #elifs here for all that good stuff.
+
 
 class Rotator(object):
     def __init__(self,center,origin,image_angle=0):
