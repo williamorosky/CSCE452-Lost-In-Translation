@@ -25,7 +25,7 @@ paint_color = WHITE
 def SocketHandler(self):
     paintsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #unsure as to the bind.
-    #serversocket.bind(
+    #paintsocket.bind()
     paintsocket.listen(1)
     connection, address = paintsocket.accept()
     
@@ -342,6 +342,8 @@ if __name__ == "__main__":
         button_list = setupButtons(screen, buttons)
         mouse = pg.mouse.get_pressed()
         pos = pg.mouse.get_pos()
+        #we need data variable here
+        #in each of these conditionals, we need something like: paintsocket.send(data)
         if mouse[0]:
             if button_list[0].collidepoint(pos):
                 yellow_arm.rotateCCW()
