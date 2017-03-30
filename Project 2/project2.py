@@ -23,13 +23,41 @@ rotation_speed = 1
 paint_color = WHITE
 
 def SocketHandler(self):
-    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    paintsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #unsure as to the bind.
+    #serversocket.bind(
+    paintsocket.listen(1)
+    connection, address = paintsocket.accept()
     
     #need messages for buttons, the buttons_list checking would probably work
-    
-    #data= recv(no idea how large bufsize should be)
-    #for delay, if true, sleep 2
-    #elifs here for all that good stuff.
+    while 1:
+        #data= recv(no idea how large bufsize should be)
+        #for delay, if true, sleep 2
+        #elifs here for all that good stuff.
+        """
+        elif data = 0
+            do if button_list[0]
+        elif data = 1
+            do if button_list[1]
+        elif data = 2
+            do if button_list[2]
+        elif data = 3
+            do if button_list[3]
+        elif data = 4
+            do if button_list[4]
+        elif data = 5
+            do if button_list[5]
+        elif data = 6
+            do if button_list[6]
+        elif data = 7
+            do if button_list[7]
+        elif data = 8
+            do if button_list[8]
+        elif data = 9
+            do if button_list[9]
+        #new button needed, Toggle delay, switches a global variable for delay.
+        """
+   
 
 
 class Rotator(object):
@@ -259,6 +287,8 @@ def initialize():
 
 if __name__ == "__main__":
 
+    thread = Thread(target = self.SocketHandler, args=[])
+    thread.start()
     pg.init()
     screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
     screen.fill(LIGHTBLUE)
