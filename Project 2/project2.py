@@ -1,6 +1,9 @@
 import sys
 import math
 import pygame as pg
+from Tkinter import *
+from tkFileDialog import askopenfilename
+from tkColorChooser import askcolor
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -18,6 +21,15 @@ CANVAS_WIDTH_HEIGHT = 350
 
 rotation_speed = 1
 paint_color = WHITE
+
+paint_on = True
+image_attached = False
+
+global image_to_draw
+scaled_down_image = pg.image.load("images/whitesquare.png")
+
+root = Tk()
+root.mainloop()
 
 class Rotator(object):
     def __init__(self,center,origin,image_angle=0):
@@ -146,7 +158,6 @@ def setupButtons(screen, buttons):
     rotate_cw_3 = screen.blit(buttons[1], (107, 323))
     screen.blit(buttons[6], (42, 418))
     
-    #Currently just placing images, turning into buttons later.
     plus_x = screen.blit(buttons[2], (590, 133)); #plus_x
     minus_x = screen.blit(buttons[4], (660, 133)); #minus_x
     plus_y = screen.blit(buttons[3], (590, 228)); #plus_y
@@ -155,16 +166,35 @@ def setupButtons(screen, buttons):
     surface = pg.Surface((50,50))
     surface = surface.convert_alpha()
     surface.fill(DARKGREY)
-    pg.draw.circle(surface, paint_color, (25, 25), 25)
+    pg.draw.circle(surface, BLACK, (25, 25), 25)
     pg.draw.circle(surface, paint_color, (25, 25), 23)
-    screen.blit(surface, (107, 418))
+    paint_select= screen.blit(surface, (107, 418))
 
-    button_list = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
+    paint = screen.blit(buttons[6], (42, 418))
+    if paint_on:
+        paint = screen.blit(buttons[6], (42, 418))
+    else:
+        paint = screen.blit(buttons[7], (42, 418))
 
-    translate_buttons = [plus_x, minus_x, plus_y, minus_y]
+    rotation_buttons = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
+    translation_buttons = [plus_x, minus_x, plus_y, minus_y]
+    paint_buttons = [paint, paint_select]
 
-    buttons_setup = button_list + translate_buttons
-    return buttons_setup
+    return rotation_buttons, translation_buttons, paint_buttons
+
+def setDrawColor():
+    (RGB, hexstr) = askcolor()
+    if RGB:
+        global paint_color
+        paint_color = RGB
+
+def setImageToDraw(screen):
+    file_name = askopenfilename() 
+    print(file_name)
+    image_to_draw = pg.image.load(file_name).convert_alpha()
+    global scaled_down_image
+    scaled_down_image = pg.transform.scale(image_to_draw, (40,40))
+    screen.blit(scaled_down_image, (650,387))
 
 
 def initialize():
@@ -256,7 +286,8 @@ if __name__ == "__main__":
             
         yellow_arm.update_end_point()
 
-        pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
+        if paint_on:
+            pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
 
         screen.fill(LIGHTBLUE)
         canvas_surface.fill(WHITE)
@@ -264,6 +295,13 @@ if __name__ == "__main__":
 
         allsprites.update()
         allsprites.draw(screen)
+        myfont = pg.font.SysFont("Roboto-Bold", 40)
+        label = myfont.render("roBOB ROSS", 1, WHITE)
+        screen.blit(label, (295, 22))
+
+        myfont = pg.font.SysFont("Roboto", 20)
+        label = myfont.render("A happy little mistake", 1, WHITE)
+        screen.blit(label, (285, 500))
 
         for i, image in enumerate(images):
             width = image.get_rect().width
@@ -273,36 +311,77 @@ if __name__ == "__main__":
             else:
                 screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)-(height/2)))
 
+        rotation_buttons, translation_buttons, paint_buttons = setupButtons(screen, buttons)
+
+        myfont = pg.font.SysFont("Roboto", 14)
+        global image_button
+        if not image_attached:
+            label = myfont.render("Upload", 1, WHITE)
+            image_button = screen.blit(label, (628, 434))
+        else:
+            label = myfont.render("Paint It!", 1, WHITE)
+            image_button = screen.blit(label, (622, 434))
+
         button_list = setupButtons(screen, buttons)
         mouse = pg.mouse.get_pressed()
         pos = pg.mouse.get_pos()
+
         if mouse[0]:
-            if button_list[0].collidepoint(pos):
+            if rotation_buttons[0].collidepoint(pos):
                 yellow_arm.rotateCCW()
                 purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
-            elif button_list[1].collidepoint(pos):
+            elif rotation_buttons[1].collidepoint(pos):
                 yellow_arm.rotateCW()
                 purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
-            elif button_list[2].collidepoint(pos):
+            elif rotation_buttons[2].collidepoint(pos):
                 purple_arm.rotateCCW()
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
-            elif button_list[3].collidepoint(pos):
+            elif rotation_buttons[3].collidepoint(pos):
                 purple_arm.rotateCW()
                 green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
 
-            elif button_list[4].collidepoint(pos):
+            elif rotation_buttons[4].collidepoint(pos):
                 green_arm.rotateCCW()
 
-            elif button_list[5].collidepoint(pos):
+            elif rotation_buttons[5].collidepoint(pos):
                 green_arm.rotateCW()
 
-            elif button_list[6].collidepoint(pos): #plus x
+            elif translation_buttons[0].collidepoint(pos):
                 print("PLUS X")
+
+            elif translation_buttons[1].collidepoint(pos):
+                print("MINUS X")
+
+            elif translation_buttons[2].collidepoint(pos):
+                print("PLUS Y")
+
+            elif translation_buttons[3].collidepoint(pos):
+                print("MINUS X")
+
+            elif paint_buttons[0].collidepoint(pos):
+                if paint_on:
+                    paint_on = False
+                else:
+                    paint_on = True
+
+            elif paint_buttons[1].collidepoint(pos):
+                setDrawColor()
+
+            elif image_button.collidepoint(pos):
+                if image_attached:
+                    image_attached = False
+                else:
+                    setImageToDraw(screen)
+                    image_attached = True
+
+        if image_attached:
+            scaled_down_image = pg.transform.scale(scaled_down_image, (50,50))
+            screen.blit(scaled_down_image, (624,360))
 
         pg.display.flip()
 
