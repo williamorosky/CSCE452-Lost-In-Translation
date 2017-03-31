@@ -24,12 +24,128 @@ paint_color = WHITE
 
 paint_on = True
 image_attached = False
+PLANK_LEN = [175, 175, 175]
 
 global image_to_draw
 scaled_down_image = pg.image.load("images/whitesquare.png")
 
 root = Tk()
 root.mainloop()
+
+class IKSolver():
+    def __init__(self, screen):
+
+        self.planknum = 3
+        self.screen = screen
+        self.FPS = 10 # frames per second setting 
+        self.fpsClock = pg.time.Clock()
+
+        image1 = pg.image.load('images/greenarm2.png')
+        image2 = pg.image.load('images/purplearm2.png')
+        image3 = pg.image.load('images/yellowarm2.png')
+
+        image1 = pg.transform.scale(image1, (349,20))
+        image2 = pg.transform.scale(image2, (349,20))
+        image3 = pg.transform.scale(image3, (349,20))
+
+        self.images = [image1, image2, image3]
+        self.plankWidth = image1.get_width()
+        self.plankHeight = image1.get_height()
+        self.plankScalars = [(int(self.plankWidth * l/175.0), self.plankHeight) for l in PLANK_LEN]
+
+        print self.plankScalars
+        self.targetImg = pg.image.load('images/target.png')
+        self.endImg = pg.image.load('images/end.png').convert_alpha()
+        self.plankAngles = [0]*3
+        self.worldAngles = [0]*3
+        self.plankPositions = [(0, 0)]*3
+        self.plankEnds = [(175, 0)]*3
+        self.goal = (-93, 93)
+
+    # convert a point, (x, y) tuple, to a PyGame coordinate
+    def pointDisplay(self, p):
+        x, y = p
+        return (SCREEN_WIDTH/2 + x, SCREEN_HEIGHT/2 - y)
+    
+    # convert a point on the screen, (x, y) tuple, to a point in world space
+    def pointActual(self, p):
+        x, y = p
+        return (x - SCREEN_WIDTH/2, -y + SCREEN_HEIGHT/2)
+        
+    def cross(self, a, b):
+        c = [a[1]*b[2] - a[2]*b[1],
+             a[2]*b[0] - a[0]*b[2],
+             a[0]*b[1] - a[1]*b[0]]
+
+        return c
+        
+    def computeJacobianTranspose(self):
+        endx, endy = self.plankEnds[-1]
+        jt = []
+        for startx, starty in self.plankPositions:
+            dx = endx - startx
+            dy = endy - starty
+            js = self.cross((0, 0, 1), (dx, dy, 0))
+            jt.append([js[0], js[1]])
+        return jt
+    
+    def computeTargetVector(self):
+        endx, endy = self.plankEnds[-1]
+        targetx, targety = self.goal
+        return [targetx-endx, targety-endy]
+        
+    def computeRotationVector(self, jacobianTranspose, targetVector):
+        rv = []
+        for row in jacobianTranspose:
+            rv.append(row[0]*targetVector[0] + row[1]*targetVector[1])
+        return rv
+    
+    def adjustForFramerate(self, v):
+        for i in range(len(v)):
+            v[i] = v[i] / (120 * float(self.FPS))
+
+        return v
+
+    def rotatePlanks(self, angles):
+        for i in range(len(self.plankAngles)):
+            self.plankAngles[i] += angles[i]
+        
+        self.worldAngles[0] = self.plankAngles[0]
+        for a in range(1, len(self.worldAngles)):
+            self.worldAngles[a] = self.worldAngles[a-1] + self.plankAngles[a]
+        
+        theta = math.radians(self.plankAngles[0])
+        x = PLANK_LEN[0] * math.cos(theta)
+        y = PLANK_LEN[0] * math.sin(theta)
+        self.plankEnds[0] = (x, y)
+        for j in range(1, len(self.plankPositions)):
+            self.plankPositions[j] = self.plankEnds[j-1]
+            x0, y0 = self.plankPositions[j]
+            theta += math.radians(self.plankAngles[j])
+            x = x0+PLANK_LEN[j] * math.cos(theta)
+            y = y0+PLANK_LEN[j] * math.sin(theta)
+            self.plankEnds[j] = (x, y)
+
+        #print self.plankPositions
+        #print self.plankEnds
+        #print self.plankAngles
+        
+    def displayPlanks(self):
+        for angle, position, scalar, image in zip(self.worldAngles, self.plankPositions, self.plankScalars, self.images):
+            stretchedPlank = pg.transform.scale(image, scalar)
+            rotatedPlank = pg.transform.rotate(stretchedPlank, angle)
+            rotRect = rotatedPlank.get_rect()
+            rotRect.center = self.pointDisplay(position)
+            self.screen.blit(rotatedPlank, rotRect)
+        endRect = self.endImg.get_rect()
+        endRect.center = self.pointDisplay(self.plankEnds[-1])
+        self.screen.blit(self.endImg, endRect)
+
+    def displayTarget(self):
+        x, y = self.goal
+        rotRect = self.targetImg.get_rect()
+        rotRect.center = self.pointDisplay((x, y))
+        self.screen.blit(self.targetImg, rotRect)
 
 class Rotator(object):
     def __init__(self,center,origin,image_angle=0):
@@ -158,10 +274,10 @@ def setupButtons(screen, buttons):
     rotate_cw_3 = screen.blit(buttons[1], (107, 323))
     screen.blit(buttons[6], (42, 418))
     
-    plus_x = screen.blit(buttons[2], (590, 133)); #plus_x
-    minus_x = screen.blit(buttons[4], (660, 133)); #minus_x
-    plus_y = screen.blit(buttons[3], (590, 228)); #plus_y
-    minus_y = screen.blit(buttons[5], (660, 228)); #minus_y
+    plus_x = screen.blit(buttons[2], (660, 133)); #plus_x
+    minus_x = screen.blit(buttons[4], (590, 133)); #minus_x
+    plus_y = screen.blit(buttons[3], (660, 228)); #plus_y
+    minus_y = screen.blit(buttons[5], (590, 228)); #minus_y
     
     surface = pg.Surface((50,50))
     surface = surface.convert_alpha()
@@ -265,8 +381,11 @@ if __name__ == "__main__":
     canvas_surface.fill(LIGHTBLUE)
 
     pg.display.set_caption('Lost in Translation')
+    solver = IKSolver(screen)
+
 
     green_arm, purple_arm, yellow_arm, images, buttons, allsprites = initialize()
+    rotationVector = [0]*3
 
     while True:
 
@@ -286,8 +405,12 @@ if __name__ == "__main__":
             
         yellow_arm.update_end_point()
 
+        print(solver.pointDisplay((int(solver.goal[0]),int(solver.goal[1]))))
+
         if paint_on:
             pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
+            pg.draw.circle(surface,paint_color,solver.pointDisplay((int(solver.goal[0]),int(solver.goal[1]))), 10)
+
 
         screen.fill(LIGHTBLUE)
         canvas_surface.fill(WHITE)
@@ -326,6 +449,22 @@ if __name__ == "__main__":
         mouse = pg.mouse.get_pressed()
         pos = pg.mouse.get_pos()
 
+        # move the joints by how much we decided
+        solver.rotatePlanks(rotationVector)
+        # print the target to the screen
+        solver.displayTarget()
+        # calculate plank position in real space and display to screen
+        solver.displayPlanks()
+        
+        # compute the Jacobian Transpose
+        jt = solver.computeJacobianTranspose()
+        # compute the target vector
+        tv = solver.computeTargetVector()
+        # compute how far to rotate each joint
+        rotationVector = solver.computeRotationVector(jt, tv)
+        # adjust for framerate
+        rotationVector = solver.adjustForFramerate(rotationVector)
+
         if mouse[0]:
             if rotation_buttons[0].collidepoint(pos):
                 yellow_arm.rotateCCW()
@@ -353,15 +492,23 @@ if __name__ == "__main__":
 
             elif translation_buttons[0].collidepoint(pos):
                 print("PLUS X")
+                x, y = (solver.goal[0]+1, solver.goal[1])
+                solver.goal = (x, y)
 
             elif translation_buttons[1].collidepoint(pos):
                 print("MINUS X")
+                x, y = (solver.goal[0]-1, solver.goal[1])
+                solver.goal = (x, y)
 
             elif translation_buttons[2].collidepoint(pos):
                 print("PLUS Y")
+                x, y = (solver.goal[0], solver.goal[1]+1)
+                solver.goal = (x, y)
 
             elif translation_buttons[3].collidepoint(pos):
-                print("MINUS X")
+                print("MINUS Y")
+                x, y = (solver.goal[0], solver.goal[1]-1)
+                solver.goal = (x, y)
 
             elif paint_buttons[0].collidepoint(pos):
                 if paint_on:
@@ -386,6 +533,8 @@ if __name__ == "__main__":
         pg.display.flip()
 
         pg.display.update()
+        solver.fpsClock.tick(solver.FPS)
+
 
     pg.quit()
     sys.exit()
