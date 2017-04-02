@@ -341,6 +341,10 @@ if __name__ == "__main__":
             rotationVector = solver.computeRotationVector(jt, tv)
             # adjust for framerate
             rotationVector = solver.adjustForFramerate(rotationVector)
+        else:
+            solver.goal = solver.plankEnds[2]
+            # solver.computeTargetVector()
+
 
         if mouse[0]:
             if rotation_buttons[0].collidepoint(pos):
