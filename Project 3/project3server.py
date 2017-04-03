@@ -48,14 +48,14 @@ serverSocket = ('localhost', 8000)
 print >> sys.stderr, 'initializing server socket on %s port %s' % serverSocket
 connectSocket.bind(serverSocket)
 
-connectSocket.listen(5)
+connectSocket.listen(1)
 
 class IKSolver():
     def __init__(self, screen):
 
         self.planknum = 3
         self.screen = screen
-        self.FPS = 10 # frames per second setting
+        self.FPS = 30 # frames per second setting
         self.fpsClock = pg.time.Clock()
 
         image1 = pg.image.load('images/greenarm2.png')
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     canvas_surface = canvas_surface.convert()
     canvas_surface.fill(LIGHTBLUE)
 
-    pg.display.set_caption('Lost in Translation')
+    pg.display.set_caption('Lost in Translation - Server')
     solver = IKSolver(screen)
 
 
@@ -287,8 +287,10 @@ if __name__ == "__main__":
 
     print >> sys.stderr, 'awaiting connection'
     (clientSocket, clientAddress) = connectSocket.accept()
+    clientSocket.send("CONNECT")
 
     while True:
+        clientSocket.send("RUNNING")
 
         pg.event.pump()
         keys = pg.key.get_pressed()
@@ -369,7 +371,7 @@ if __name__ == "__main__":
             if rotation_buttons[0].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] + 1
-                clientSocket.send("0")
+                clientSocket.send("YELLOW CCW")
                 """
                 Serverside Delay code if we need it.
                 if delay == True:
@@ -381,56 +383,58 @@ if __name__ == "__main__":
             elif rotation_buttons[1].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] - 1
-                clientSocket.send("1")
+                clientSocket.send("YELLOW CW")
 
             elif rotation_buttons[2].collidepoint(pos):
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] + 1
-                clientSocket.send("2")
+                clientSocket.send("PURPLE CCW")
 
             elif rotation_buttons[3].collidepoint(pos):
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] - 1
-                clientSocket.send("3")
+                clientSocket.send("PURPLE CW")
 
             elif rotation_buttons[4].collidepoint(pos):
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] + 1
-                clientSocket.send("4")
+                clientSocket.send("GREEN CCW")
 
             elif rotation_buttons[5].collidepoint(pos):
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] - 1
-                clientSocket.send("5")
+                clientSocket.send("GREEN CW")
 
             elif translation_buttons[0].collidepoint(pos):
                 rotatingArm = -1
                 x, y = (solver.goal[0]+1, solver.goal[1])
                 solver.goal = (x, y)
-                clientSocket.send("6")
+                clientSocket.send("PLUS X")
 
             elif translation_buttons[1].collidepoint(pos):
                 rotatingArm = -1
                 x, y = (solver.goal[0]-1, solver.goal[1])
                 solver.goal = (x, y)
-                clientSocket.send("7")
+                clientSocket.send("MINUS X")
 
             elif translation_buttons[2].collidepoint(pos):
                 rotatingArm = -1
                 x, y = (solver.goal[0], solver.goal[1]+1)
                 solver.goal = (x, y)
-                clientSocket.send("8")
+                clientSocket.send("PLUS Y")
 
             elif translation_buttons[3].collidepoint(pos):
                 rotatingArm = -1
                 x, y = (solver.goal[0], solver.goal[1]-1)
                 solver.goal = (x, y)
-                clientSocket.send("9")
+                clientSocket.send("MINUS Y")
 
             elif paint_buttons[0].collidepoint(pos):
                 if paint_on:
+                    clientSocket.send("PAINT OFF")
                     paint_on = False
                 else:
+                    clientSocket.send("PAINT ON")
                     paint_on = True
 
             elif paint_buttons[1].collidepoint(pos):

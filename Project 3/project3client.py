@@ -10,7 +10,7 @@ from tkColorChooser import askcolor
 
 # default delay is turned off.
 # when true, delay is approximately 2 seconds
-delay = True
+delay = False
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -43,17 +43,21 @@ root.mainloop()
 
 # CLIENT
 connectSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
 serverSocket = ('localhost', 8000)
 print >> sys.stderr, 'connecting to %s port %s' % serverSocket
-connectSocket.connect(serverSocket)
+
+try:
+    connectSocket.connect(serverSocket)
+    print("Connected!")
+except Exception as e:
+    print("something's wrong with %s:%d. Exception is %s" % (serverSocket[0], serverSocket[1], e))
 
 class IKSolver():
     def __init__(self, screen):
 
         self.planknum = 3
         self.screen = screen
-        self.FPS = 10 # frames per second setting
+        self.FPS = 30 # frames per second setting
         self.fpsClock = pg.time.Clock()
 
         image1 = pg.image.load('images/greenarm2.png')
@@ -184,6 +188,40 @@ class IKSolver():
         rotRect.center = self.pointDisplay((x, y))
         self.screen.blit(self.targetImg, rotRect)
 
+def setupButtons(screen, buttons):
+    rotate_ccw_1 = screen.blit(buttons[0], (42, 133))
+    rotate_cw_1 = screen.blit(buttons[1], (107, 133))
+    rotate_ccw_2 = screen.blit(buttons[0], (42, 228))
+    rotate_cw_2 = screen.blit(buttons[1], (107, 228))
+    rotate_ccw_3 = screen.blit(buttons[0], (42, 323))
+    rotate_cw_3 = screen.blit(buttons[1], (107, 323))
+    screen.blit(buttons[6], (42, 418))
+
+    plus_x = screen.blit(buttons[2], (660, 133)); #plus_x
+    minus_x = screen.blit(buttons[4], (590, 133)); #minus_x
+    plus_y = screen.blit(buttons[3], (660, 228)); #plus_y
+    minus_y = screen.blit(buttons[5], (590, 228)); #minus_y
+
+    surface = pg.Surface((50,50))
+    surface = surface.convert_alpha()
+    surface.fill(DARKGREY)
+    pg.draw.circle(surface, BLACK, (25, 25), 25)
+    pg.draw.circle(surface, paint_color, (25, 25), 23)
+    paint_select= screen.blit(surface, (107, 418))
+
+    paint = screen.blit(buttons[6], (42, 418))
+    if paint_on:
+        paint = screen.blit(buttons[6], (42, 418))
+    else:
+        paint = screen.blit(buttons[7], (42, 418))
+
+    rotation_buttons = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
+    translation_buttons = [plus_x, minus_x, plus_y, minus_y]
+    paint_buttons = [paint, paint_select]
+
+    return rotation_buttons, translation_buttons, paint_buttons
+
+
 def setDrawColor():
     (RGB, hexstr) = askcolor()
     if RGB:
@@ -203,10 +241,33 @@ def initialize():
     base = pg.transform.scale(base, (60,20))
     bob_ross = pg.image.load("images/bobross.png").convert_alpha()
     bob_ross = pg.transform.scale(bob_ross, (55,65))
+    button_backgrounds = pg.image.load("images/buttonbackground.png").convert_alpha()
+    button_backgrounds = pg.transform.scale(button_backgrounds, (690,350))
 
-    images = [base, bob_ross]
+    rotate_ccw = pg.image.load("images/rotateccw.png").convert_alpha()
+    rotate_ccw = pg.transform.scale(rotate_ccw, (50,50))
+    rotate_cw = pg.image.load("images/rotatecw.png").convert_alpha()
+    rotate_cw = pg.transform.scale(rotate_cw, (50,50))
 
-    return images
+    plus_x = pg.image.load("images/plusx.png").convert_alpha()
+    plus_x = pg.transform.scale(plus_x, (50,50))
+    plus_y = pg.image.load("images/plusy.png").convert_alpha()
+    plus_y = pg.transform.scale(plus_y, (50,50))
+    minus_x = pg.image.load("images/minusx.png").convert_alpha()
+    minus_x = pg.transform.scale(minus_x, (50,50))
+    minus_y = pg.image.load("images/minusy.png").convert_alpha()
+    minus_y = pg.transform.scale(minus_y, (50,50))
+
+    paint_on = pg.image.load("images/painton.png").convert_alpha()
+    paint_on = pg.transform.scale(paint_on, (50,50))
+    paint_off = pg.image.load("images/paintoff.png").convert_alpha()
+    paint_off = pg.transform.scale(paint_off, (50,50))
+
+    images = [base, bob_ross, button_backgrounds]
+    buttons = [rotate_ccw, rotate_cw, plus_x, plus_y, minus_x, minus_y, paint_on, paint_off]
+
+    return images, buttons
+
 
 if __name__ == "__main__":
     pg.init()
@@ -220,14 +281,13 @@ if __name__ == "__main__":
     canvas_surface = canvas_surface.convert()
     canvas_surface.fill(LIGHTBLUE)
 
-    pg.display.set_caption('Lost in Translation')
+    pg.display.set_caption('Lost in Translation - Client')
     solver = IKSolver(screen)
 
-    images = initialize()
+    images, buttons = initialize()
     rotationVector = [0]*3
 
     while True:
-        data = connectSocket.recv(1)
 
         # once the server closes, close the client
         # works, but causes issues when starting another game if not done properly
@@ -269,13 +329,28 @@ if __name__ == "__main__":
         label = myfont.render("A happy little mistake", 1, WHITE)
         screen.blit(label, (285, 500))
 
-        width = images[0].get_rect().width
-        height = images[0].get_rect().height
-        width = images[1].get_rect().width
-        height = images[1].get_rect().height
-        screen.blit(images[0], ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)+(CANVAS_WIDTH_HEIGHT/2)-(height)))
-        screen.blit(images[1], ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)+(CANVAS_WIDTH_HEIGHT/2)-(height)))
+        for i, image in enumerate(images):
+            width = image.get_rect().width
+            height = image.get_rect().height
+            if i < 2 :
+                screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)+(CANVAS_WIDTH_HEIGHT/2)-(height)))
+            else:
+                screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)-(height/2)))
 
+        rotation_buttons, translation_buttons, paint_buttons = setupButtons(screen, buttons)
+
+        myfont = pg.font.SysFont("Roboto", 14)
+        global image_button
+        if not image_attached:
+            label = myfont.render("Upload", 1, WHITE)
+            image_button = screen.blit(label, (628, 434))
+        else:
+            label = myfont.render("Paint It!", 1, WHITE)
+            image_button = screen.blit(label, (622, 434))
+
+        button_list = setupButtons(screen, buttons)
+        mouse = pg.mouse.get_pressed()
+        pos = pg.mouse.get_pos()
 
         # move the joints by how much we decided
         solver.rotatePlanks(rotationVector, rotatingArm)
@@ -297,59 +372,63 @@ if __name__ == "__main__":
             solver.goal = solver.plankEnds[2]
             # solver.computeTargetVector()
 
+        data = connectSocket.recv(1024)
+        print(data)
+        data = data.replace("RUNNING", "")
+        print(data)
         if delay == True:
             time.sleep(2)
 
         if data:
-            if data == "0":
+            if data == "YELLOW CCW":
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] + 1
 
-            elif data == "1":
+            elif data == "YELLOW CW":
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] - 1
 
-            elif data == "2":
+            elif data == "PURPLE CCW":
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] + 1
 
-            elif data == "3":
+            elif data == "PURPLE CW":
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] - 1
 
-            elif data == "4":
+            elif data == "GREEN CCW":
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] + 1
 
-            elif data == "5":
+            elif data == "GREEN CW":
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] - 1
 
-            elif data == "6":
+            elif data == "PLUS X":
                 rotatingArm = -1
                 x, y = (solver.goal[0]+1, solver.goal[1])
                 solver.goal = (x, y)
 
-            elif data == "7":
+            elif data == "MINUS X":
                 rotatingArm = -1
                 x, y = (solver.goal[0]-1, solver.goal[1])
                 solver.goal = (x, y)
 
-            elif data == "8":
+            elif data == "PLUS Y":
                 rotatingArm = -1
                 x, y = (solver.goal[0], solver.goal[1]+1)
                 solver.goal = (x, y)
 
-            elif data == "9":
+            elif data == "MINUS Y":
                 rotatingArm = -1
                 x, y = (solver.goal[0], solver.goal[1]-1)
                 solver.goal = (x, y)
 
-            elif paint_buttons[0].collidepoint(pos):
-                if paint_on:
-                    paint_on = False
-                else:
-                    paint_on = True
+            elif data == "PAINT OFF":
+                paint_on = False
+                
+            elif data == "PAINT ON":
+                paint_on = True
 
             elif paint_buttons[1].collidepoint(pos):
                 setDrawColor()
