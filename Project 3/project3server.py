@@ -1,11 +1,16 @@
 import socket
 import sys
+import time
 
 import math
 import pygame as pg
 from Tkinter import *
 from tkFileDialog import askopenfilename
 from tkColorChooser import askcolor
+
+# default delay is turned off.
+# when true, delay is approximately 2 seconds
+delay = False
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -50,7 +55,7 @@ class IKSolver():
 
         self.planknum = 3
         self.screen = screen
-        self.FPS = 10 # frames per second setting 
+        self.FPS = 10 # frames per second setting
         self.fpsClock = pg.time.Clock()
 
         image1 = pg.image.load('images/greenarm2.png')
@@ -78,19 +83,19 @@ class IKSolver():
     def pointDisplay(self, p):
         x, y = p
         return (SCREEN_WIDTH/2 + x, SCREEN_HEIGHT/2 - y)
-    
+
     # convert a point on the screen, (x, y) tuple, to a point in world space
     def pointActual(self, p):
         x, y = p
         return (x - SCREEN_WIDTH/2, -y + SCREEN_HEIGHT/2)
-        
+
     def cross(self, a, b):
         c = [a[1]*b[2] - a[2]*b[1],
              a[2]*b[0] - a[0]*b[2],
              a[0]*b[1] - a[1]*b[0]]
 
         return c
-        
+
     def computeJacobianTranspose(self):
         endx, endy = self.plankEnds[-1]
         jt = []
@@ -100,18 +105,18 @@ class IKSolver():
             js = self.cross((0, 0, 1), (dx, dy, 0))
             jt.append([js[0], js[1]])
         return jt
-    
+
     def computeTargetVector(self):
         endx, endy = self.plankEnds[-1]
         targetx, targety = self.goal
         return [targetx-endx, targety-endy]
-        
+
     def computeRotationVector(self, jacobianTranspose, targetVector):
         rv = []
         for row in jacobianTranspose:
             rv.append(row[0]*targetVector[0] + row[1]*targetVector[1])
         return rv
-    
+
     def adjustForFramerate(self, v):
         for i in range(len(v)):
             v[i] = v[i] / (120 * float(self.FPS))
@@ -122,11 +127,11 @@ class IKSolver():
         if rotating == -1:
             for i in range(len(self.plankAngles)):
                 self.plankAngles[i] += angles[i]
-            
+
             self.worldAngles[0] = self.plankAngles[0]
             for a in range(1, len(self.worldAngles)):
                 self.worldAngles[a] = self.worldAngles[a-1] + self.plankAngles[a]
-            
+
             theta = math.radians(self.plankAngles[0])
             x = PLANK_LEN[0] * math.cos(theta)
             y = PLANK_LEN[0] * math.sin(theta)
@@ -163,7 +168,7 @@ class IKSolver():
         #print self.plankPositions
         #print self.plankEnds
         #print self.plankAngles
-        
+
     def displayPlanks(self):
         for angle, position, scalar, image in zip(self.worldAngles, self.plankPositions, self.plankScalars, self.images):
             stretchedPlank = pg.transform.scale(image, scalar)
@@ -189,12 +194,12 @@ def setupButtons(screen, buttons):
     rotate_ccw_3 = screen.blit(buttons[0], (42, 323))
     rotate_cw_3 = screen.blit(buttons[1], (107, 323))
     screen.blit(buttons[6], (42, 418))
-    
+
     plus_x = screen.blit(buttons[2], (660, 133)); #plus_x
     minus_x = screen.blit(buttons[4], (590, 133)); #minus_x
     plus_y = screen.blit(buttons[3], (660, 228)); #plus_y
     minus_y = screen.blit(buttons[5], (590, 228)); #minus_y
-    
+
     surface = pg.Surface((50,50))
     surface = surface.convert_alpha()
     surface.fill(DARKGREY)
@@ -221,7 +226,7 @@ def setDrawColor():
         paint_color = RGB
 
 def setImageToDraw(screen):
-    file_name = askopenfilename() 
+    file_name = askopenfilename()
     image_to_draw = pg.image.load(file_name).convert_alpha()
     global scaled_down_image
     scaled_down_image = pg.transform.scale(image_to_draw, (40,40))
@@ -293,7 +298,7 @@ if __name__ == "__main__":
             if event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
-        
+
         if keys[pg.K_EQUALS] or keys[pg.K_KP_PLUS]:
             rotation_speed += 1
         elif keys[pg.K_MINUS] or keys[pg.K_KP_MINUS]:
@@ -345,7 +350,7 @@ if __name__ == "__main__":
         solver.displayTarget()
             # calculate plank position in real space and display to screen
         solver.displayPlanks()
-        
+
         if rotatingArm == -1:
             # compute the Jacobian Transpose
             jt = solver.computeJacobianTranspose()
@@ -364,60 +369,96 @@ if __name__ == "__main__":
             if rotation_buttons[0].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] + 1
-                clientSocket.send("0")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("0")
+                elif delay == False:
+                    clientSocket.send("0")
 
             elif rotation_buttons[1].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] - 1
-                clientSocket.send("1")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("1")
+                elif delay == False:
+                    clientSocket.send("1")
 
             elif rotation_buttons[2].collidepoint(pos):
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] + 1
-                clientSocket.send("2")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("2")
+                elif delay == False:
+                    clientSocket.send("2")
 
             elif rotation_buttons[3].collidepoint(pos):
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] - 1
-                clientSocket.send("3")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("3")
+                elif delay == False:
+                    clientSocket.send("3")
 
             elif rotation_buttons[4].collidepoint(pos):
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] + 1
-                clientSocket.send("4")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("4")
+                elif delay == False:
+                    clientSocket.send("4")
 
             elif rotation_buttons[5].collidepoint(pos):
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] - 1
-                clientSocket.send("5")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("5")
+                elif delay == False:
+                    clientSocket.send("5")
 
             elif translation_buttons[0].collidepoint(pos):
                 rotatingArm = -1
-                print("PLUS X")
                 x, y = (solver.goal[0]+1, solver.goal[1])
                 solver.goal = (x, y)
-                clientSocket.send("6")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("6")
+                elif delay == False:
+                    clientSocket.send("6")
 
             elif translation_buttons[1].collidepoint(pos):
                 rotatingArm = -1
-                print("MINUS X")
                 x, y = (solver.goal[0]-1, solver.goal[1])
                 solver.goal = (x, y)
-                clientSocket.send("7")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("7")
+                elif delay == False:
+                    clientSocket.send("7")
 
             elif translation_buttons[2].collidepoint(pos):
                 rotatingArm = -1
-                print("PLUS Y")
                 x, y = (solver.goal[0], solver.goal[1]+1)
                 solver.goal = (x, y)
-                clientSocket.send("8")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("8")
+                elif delay == False:
+                    clientSocket.send("8")
 
             elif translation_buttons[3].collidepoint(pos):
                 rotatingArm = -1
-                print("MINUS Y")
                 x, y = (solver.goal[0], solver.goal[1]-1)
                 solver.goal = (x, y)
-                clientSocket.send("9")
+                if delay == True:
+                    time.sleep(2)
+                    clientSocket.send("9")
+                elif delay == False:
+                    clientSocket.send("9")
 
             elif paint_buttons[0].collidepoint(pos):
                 if paint_on:
@@ -443,7 +484,7 @@ if __name__ == "__main__":
 
         pg.display.update()
         solver.fpsClock.tick(solver.FPS)
-    
+
     clientSocket.close();
     pg.quit()
     sys.exit()

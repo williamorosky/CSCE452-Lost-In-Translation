@@ -48,7 +48,7 @@ class IKSolver():
 
         self.planknum = 3
         self.screen = screen
-        self.FPS = 10 # frames per second setting 
+        self.FPS = 10 # frames per second setting
         self.fpsClock = pg.time.Clock()
 
         image1 = pg.image.load('images/greenarm2.png')
@@ -76,19 +76,19 @@ class IKSolver():
     def pointDisplay(self, p):
         x, y = p
         return (SCREEN_WIDTH/2 + x, SCREEN_HEIGHT/2 - y)
-    
+
     # convert a point on the screen, (x, y) tuple, to a point in world space
     def pointActual(self, p):
         x, y = p
         return (x - SCREEN_WIDTH/2, -y + SCREEN_HEIGHT/2)
-        
+
     def cross(self, a, b):
         c = [a[1]*b[2] - a[2]*b[1],
              a[2]*b[0] - a[0]*b[2],
              a[0]*b[1] - a[1]*b[0]]
 
         return c
-        
+
     def computeJacobianTranspose(self):
         endx, endy = self.plankEnds[-1]
         jt = []
@@ -98,18 +98,18 @@ class IKSolver():
             js = self.cross((0, 0, 1), (dx, dy, 0))
             jt.append([js[0], js[1]])
         return jt
-    
+
     def computeTargetVector(self):
         endx, endy = self.plankEnds[-1]
         targetx, targety = self.goal
         return [targetx-endx, targety-endy]
-        
+
     def computeRotationVector(self, jacobianTranspose, targetVector):
         rv = []
         for row in jacobianTranspose:
             rv.append(row[0]*targetVector[0] + row[1]*targetVector[1])
         return rv
-    
+
     def adjustForFramerate(self, v):
         for i in range(len(v)):
             v[i] = v[i] / (120 * float(self.FPS))
@@ -120,11 +120,11 @@ class IKSolver():
         if rotating == -1:
             for i in range(len(self.plankAngles)):
                 self.plankAngles[i] += angles[i]
-            
+
             self.worldAngles[0] = self.plankAngles[0]
             for a in range(1, len(self.worldAngles)):
                 self.worldAngles[a] = self.worldAngles[a-1] + self.plankAngles[a]
-            
+
             theta = math.radians(self.plankAngles[0])
             x = PLANK_LEN[0] * math.cos(theta)
             y = PLANK_LEN[0] * math.sin(theta)
@@ -161,7 +161,7 @@ class IKSolver():
         #print self.plankPositions
         #print self.plankEnds
         #print self.plankAngles
-        
+
     def displayPlanks(self):
         for angle, position, scalar, image in zip(self.worldAngles, self.plankPositions, self.plankScalars, self.images):
             stretchedPlank = pg.transform.scale(image, scalar)
@@ -179,39 +179,6 @@ class IKSolver():
         rotRect.center = self.pointDisplay((x, y))
         self.screen.blit(self.targetImg, rotRect)
 
-def setupButtons(screen, buttons):
-    rotate_ccw_1 = screen.blit(buttons[0], (42, 133))
-    rotate_cw_1 = screen.blit(buttons[1], (107, 133))
-    rotate_ccw_2 = screen.blit(buttons[0], (42, 228))
-    rotate_cw_2 = screen.blit(buttons[1], (107, 228))
-    rotate_ccw_3 = screen.blit(buttons[0], (42, 323))
-    rotate_cw_3 = screen.blit(buttons[1], (107, 323))
-    screen.blit(buttons[6], (42, 418))
-    
-    plus_x = screen.blit(buttons[2], (660, 133)); #plus_x
-    minus_x = screen.blit(buttons[4], (590, 133)); #minus_x
-    plus_y = screen.blit(buttons[3], (660, 228)); #plus_y
-    minus_y = screen.blit(buttons[5], (590, 228)); #minus_y
-    
-    surface = pg.Surface((50,50))
-    surface = surface.convert_alpha()
-    surface.fill(DARKGREY)
-    pg.draw.circle(surface, BLACK, (25, 25), 25)
-    pg.draw.circle(surface, paint_color, (25, 25), 23)
-    paint_select= screen.blit(surface, (107, 418))
-
-    paint = screen.blit(buttons[6], (42, 418))
-    if paint_on:
-        paint = screen.blit(buttons[6], (42, 418))
-    else:
-        paint = screen.blit(buttons[7], (42, 418))
-
-    rotation_buttons = [rotate_ccw_1, rotate_cw_1, rotate_ccw_2, rotate_cw_2, rotate_ccw_3, rotate_cw_3]
-    translation_buttons = [plus_x, minus_x, plus_y, minus_y]
-    paint_buttons = [paint, paint_select]
-
-    return rotation_buttons, translation_buttons, paint_buttons
-
 def setDrawColor():
     (RGB, hexstr) = askcolor()
     if RGB:
@@ -219,7 +186,7 @@ def setDrawColor():
         paint_color = RGB
 
 def setImageToDraw(screen):
-    file_name = askopenfilename() 
+    file_name = askopenfilename()
     image_to_draw = pg.image.load(file_name).convert_alpha()
     global scaled_down_image
     scaled_down_image = pg.transform.scale(image_to_draw, (40,40))
@@ -231,35 +198,12 @@ def initialize():
     base = pg.transform.scale(base, (60,20))
     bob_ross = pg.image.load("images/bobross.png").convert_alpha()
     bob_ross = pg.transform.scale(bob_ross, (55,65))
-    button_backgrounds = pg.image.load("images/buttonbackground.png").convert_alpha()
-    button_backgrounds = pg.transform.scale(button_backgrounds, (690,350))
 
-    rotate_ccw = pg.image.load("images/rotateccw.png").convert_alpha()
-    rotate_ccw = pg.transform.scale(rotate_ccw, (50,50))
-    rotate_cw = pg.image.load("images/rotatecw.png").convert_alpha()
-    rotate_cw = pg.transform.scale(rotate_cw, (50,50))
+    images = [base, bob_ross]
 
-    plus_x = pg.image.load("images/plusx.png").convert_alpha()
-    plus_x = pg.transform.scale(plus_x, (50,50))
-    plus_y = pg.image.load("images/plusy.png").convert_alpha()
-    plus_y = pg.transform.scale(plus_y, (50,50))
-    minus_x = pg.image.load("images/minusx.png").convert_alpha()
-    minus_x = pg.transform.scale(minus_x, (50,50))
-    minus_y = pg.image.load("images/minusy.png").convert_alpha()
-    minus_y = pg.transform.scale(minus_y, (50,50))
-
-    paint_on = pg.image.load("images/painton.png").convert_alpha()
-    paint_on = pg.transform.scale(paint_on, (50,50))
-    paint_off = pg.image.load("images/paintoff.png").convert_alpha()
-    paint_off = pg.transform.scale(paint_off, (50,50))
-
-    images = [base, bob_ross, button_backgrounds]
-    buttons = [rotate_ccw, rotate_cw, plus_x, plus_y, minus_x, minus_y, paint_on, paint_off]
-
-    return images, buttons
+    return images
 
 if __name__ == "__main__":
-
     pg.init()
     screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
     screen.fill(LIGHTBLUE)
@@ -274,13 +218,20 @@ if __name__ == "__main__":
     pg.display.set_caption('Lost in Translation')
     solver = IKSolver(screen)
 
-
-    images, buttons = initialize()
+    images = initialize()
     rotationVector = [0]*3
 
     while True:
         data = connectSocket.recv(1)
-        print >> sys.stderr, 'received "%s"' % data
+
+        # once the server closes, close the client
+        # works, but causes issues when starting another game if not done properly
+        """
+        if data == "":
+            connectSocket.close()
+            pg.quit()
+            sys.exit()
+        """
 
         pg.event.pump()
         keys = pg.key.get_pressed()
@@ -290,7 +241,7 @@ if __name__ == "__main__":
             if event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
-        
+
         if keys[pg.K_EQUALS] or keys[pg.K_KP_PLUS]:
             rotation_speed += 1
         elif keys[pg.K_MINUS] or keys[pg.K_KP_MINUS]:
@@ -313,28 +264,13 @@ if __name__ == "__main__":
         label = myfont.render("A happy little mistake", 1, WHITE)
         screen.blit(label, (285, 500))
 
-        for i, image in enumerate(images):
-            width = image.get_rect().width
-            height = image.get_rect().height
-            if i < 2 :
-                screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)+(CANVAS_WIDTH_HEIGHT/2)-(height)))
-            else:
-                screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)-(height/2)))
+        width = images[0].get_rect().width
+        height = images[0].get_rect().height
+        width = images[1].get_rect().width
+        height = images[1].get_rect().height
+        screen.blit(images[0], ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)+(CANVAS_WIDTH_HEIGHT/2)-(height)))
+        screen.blit(images[1], ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)+(CANVAS_WIDTH_HEIGHT/2)-(height)))
 
-        rotation_buttons, translation_buttons, paint_buttons = setupButtons(screen, buttons)
-
-        myfont = pg.font.SysFont("Roboto", 14)
-        global image_button
-        if not image_attached:
-            label = myfont.render("Upload", 1, WHITE)
-            image_button = screen.blit(label, (628, 434))
-        else:
-            label = myfont.render("Paint It!", 1, WHITE)
-            image_button = screen.blit(label, (622, 434))
-
-        button_list = setupButtons(screen, buttons)
-        mouse = pg.mouse.get_pressed()
-        pos = pg.mouse.get_pos()
 
         # move the joints by how much we decided
         solver.rotatePlanks(rotationVector, rotatingArm)
@@ -342,7 +278,7 @@ if __name__ == "__main__":
         solver.displayTarget()
             # calculate plank position in real space and display to screen
         solver.displayPlanks()
-        
+
         if rotatingArm == -1:
             # compute the Jacobian Transpose
             jt = solver.computeJacobianTranspose()
@@ -357,7 +293,7 @@ if __name__ == "__main__":
             # solver.computeTargetVector()
 
 
-        if mouse[0]:
+        if data:
             if data == "0":
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] + 1
@@ -365,15 +301,15 @@ if __name__ == "__main__":
             elif data == "1":
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] - 1
-                
+
             elif data == "2":
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] + 1
-                
+
             elif data == "3":
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] - 1
-                
+
             elif data == "4":
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] + 1
@@ -384,25 +320,21 @@ if __name__ == "__main__":
 
             elif data == "6":
                 rotatingArm = -1
-                print("PLUS X")
                 x, y = (solver.goal[0]+1, solver.goal[1])
                 solver.goal = (x, y)
 
             elif data == "7":
                 rotatingArm = -1
-                print("MINUS X")
                 x, y = (solver.goal[0]-1, solver.goal[1])
                 solver.goal = (x, y)
 
             elif data == "8":
                 rotatingArm = -1
-                print("PLUS Y")
                 x, y = (solver.goal[0], solver.goal[1]+1)
                 solver.goal = (x, y)
 
             elif data == "9":
                 rotatingArm = -1
-                print("MINUS Y")
                 x, y = (solver.goal[0], solver.goal[1]-1)
                 solver.goal = (x, y)
 
