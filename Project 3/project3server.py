@@ -1,16 +1,12 @@
 import socket
 import sys
 
-"""
 import math
 import pygame as pg
 from Tkinter import *
 from tkFileDialog import askopenfilename
 from tkColorChooser import askcolor
-"""
 
-
-"""
 # set up the colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -37,8 +33,8 @@ scaled_down_image = pg.image.load("images/whitesquare.png")
 
 root = Tk()
 root.mainloop()
-"""
 
+# SERVER
 connectSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 serverSocket = ('localhost', 8000)
@@ -47,200 +43,6 @@ connectSocket.bind(serverSocket)
 
 connectSocket.listen(5)
 
-while True:
-    print >> sys.stderr, 'awaiting connection'
-    (clientSocket, clientAddress) = connectSocket.accept()
-
-    try:
-        print >> sys.stderr, 'connection from', clientAddress
-
-        while True:
-            data = clientSocket.recv(16)
-            print >> sys.stderr, 'received "%s"' % data
-
-            if data:
-                print >> sys.stderr, 'sending data back to client'
-                clientSocket.sendall(data)
-            else:
-                print >> sys.stderr, 'no more data from', clientAddress
-                break
-
-    finally:
-        clientSocket.close()
-
-"""
-pg.init()
-    screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-    screen.fill(LIGHTBLUE)
-    surface = pg.Surface(screen.get_size())
-    surface = surface.convert()
-    surface.fill(LIGHTBLUE)
-
-    canvas_surface = pg.Surface((CANVAS_WIDTH_HEIGHT,CANVAS_WIDTH_HEIGHT))
-    canvas_surface = canvas_surface.convert()
-    canvas_surface.fill(LIGHTBLUE)
-
-    pg.display.set_caption('Lost in Translation')
-    solver = IKSolver(screen)
-
-
-    green_arm, purple_arm, yellow_arm, images, buttons, allsprites = initialize()
-    rotationVector = [0]*3
-
-    while True:
-
-        pg.event.pump()
-        keys = pg.key.get_pressed()
-
-        for event in pg.event.get():
-
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-
-        if keys[pg.K_EQUALS] or keys[pg.K_KP_PLUS]:
-            rotation_speed += 1
-        elif keys[pg.K_MINUS] or keys[pg.K_KP_MINUS]:
-            rotation_speed -= 1
-
-        yellow_arm.update_end_point()
-
-        print(solver.pointDisplay((int(solver.goal[0]),int(solver.goal[1]))))
-
-        if paint_on:
-            pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
-            pg.draw.circle(surface,paint_color,solver.pointDisplay((int(solver.goal[0]),int(solver.goal[1]))), 10)
-
-
-        screen.fill(LIGHTBLUE)
-        canvas_surface.fill(WHITE)
-        screen.blit(surface, (0,0))
-
-        allsprites.update()
-        allsprites.draw(screen)
-        myfont = pg.font.SysFont("Roboto-Bold", 40)
-        label = myfont.render("roBOB ROSS", 1, WHITE)
-        screen.blit(label, (295, 22))
-
-        myfont = pg.font.SysFont("Roboto", 20)
-        label = myfont.render("A happy little mistake", 1, WHITE)
-        screen.blit(label, (285, 500))
-
-        for i, image in enumerate(images):
-            width = image.get_rect().width
-            height = image.get_rect().height
-            if i < 2 :
-                screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)+(CANVAS_WIDTH_HEIGHT/2)-(height)))
-            else:
-                screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)-(height/2)))
-
-        rotation_buttons, translation_buttons, paint_buttons = setupButtons(screen, buttons)
-
-        myfont = pg.font.SysFont("Roboto", 14)
-        global image_button
-        if not image_attached:
-            label = myfont.render("Upload", 1, WHITE)
-            image_button = screen.blit(label, (628, 434))
-        else:
-            label = myfont.render("Paint It!", 1, WHITE)
-            image_button = screen.blit(label, (622, 434))
-
-        button_list = setupButtons(screen, buttons)
-        mouse = pg.mouse.get_pressed()
-        pos = pg.mouse.get_pos()
-
-        # move the joints by how much we decided
-        solver.rotatePlanks(rotationVector)
-        # print the target to the screen
-        solver.displayTarget()
-        # calculate plank position in real space and display to screen
-        solver.displayPlanks()
-
-        # compute the Jacobian Transpose
-        jt = solver.computeJacobianTranspose()
-        # compute the target vector
-        tv = solver.computeTargetVector()
-        # compute how far to rotate each joint
-        rotationVector = solver.computeRotationVector(jt, tv)
-        # adjust for framerate
-        rotationVector = solver.adjustForFramerate(rotationVector)
-
-        if mouse[0]:
-            if rotation_buttons[0].collidepoint(pos):
-                yellow_arm.rotateCCW()
-                purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
-
-            elif rotation_buttons[1].collidepoint(pos):
-                yellow_arm.rotateCW()
-                purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
-
-            elif rotation_buttons[2].collidepoint(pos):
-                purple_arm.rotateCCW()
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
-
-            elif rotation_buttons[3].collidepoint(pos):
-                purple_arm.rotateCW()
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
-
-            elif rotation_buttons[4].collidepoint(pos):
-                green_arm.rotateCCW()
-
-            elif rotation_buttons[5].collidepoint(pos):
-                green_arm.rotateCW()
-
-            elif translation_buttons[0].collidepoint(pos):
-                print("PLUS X")
-                x, y = (solver.goal[0]+1, solver.goal[1])
-                solver.goal = (x, y)
-
-            elif translation_buttons[1].collidepoint(pos):
-                print("MINUS X")
-                x, y = (solver.goal[0]-1, solver.goal[1])
-                solver.goal = (x, y)
-
-            elif translation_buttons[2].collidepoint(pos):
-                print("PLUS Y")
-                x, y = (solver.goal[0], solver.goal[1]+1)
-                solver.goal = (x, y)
-
-            elif translation_buttons[3].collidepoint(pos):
-                print("MINUS Y")
-                x, y = (solver.goal[0], solver.goal[1]-1)
-                solver.goal = (x, y)
-
-            elif paint_buttons[0].collidepoint(pos):
-                if paint_on:
-                    paint_on = False
-                else:
-                    paint_on = True
-
-            elif paint_buttons[1].collidepoint(pos):
-                setDrawColor()
-
-            elif image_button.collidepoint(pos):
-                if image_attached:
-                    image_attached = False
-                else:
-                    setImageToDraw(screen)
-                    image_attached = True
-
-        if image_attached:
-            scaled_down_image = pg.transform.scale(scaled_down_image, (50,50))
-            screen.blit(scaled_down_image, (624,360))
-
-        pg.display.flip()
-
-        pg.display.update()
-        solver.fpsClock.tick(solver.FPS)
-
-
-    pg.quit()
-    sys.exit()
-"""
-
-"""
 class IKSolver():
     def __init__(self, screen):
 
@@ -521,7 +323,6 @@ def setImageToDraw(screen):
     scaled_down_image = pg.transform.scale(image_to_draw, (40,40))
     screen.blit(scaled_down_image, (650,387))
 
-
 def initialize():
 
     base = pg.image.load("images/base.png").convert_alpha()
@@ -575,4 +376,192 @@ def initialize():
     buttons = [rotate_ccw, rotate_cw, plus_x, plus_y, minus_x, minus_y, paint_on, paint_off]
 
     return green_arm, purple_arm, yellow_arm, images, buttons, pg.sprite.RenderPlain(sprites)
-"""
+
+if __name__ == "__main__":
+    pg.init()
+    screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
+    screen.fill(LIGHTBLUE)
+    surface = pg.Surface(screen.get_size())
+    surface = surface.convert()
+    surface.fill(LIGHTBLUE)
+
+    canvas_surface = pg.Surface((CANVAS_WIDTH_HEIGHT,CANVAS_WIDTH_HEIGHT))
+    canvas_surface = canvas_surface.convert()
+    canvas_surface.fill(LIGHTBLUE)
+
+    pg.display.set_caption('Lost in Translation')
+    solver = IKSolver(screen)
+
+
+    green_arm, purple_arm, yellow_arm, images, buttons, allsprites = initialize()
+    rotationVector = [0]*3
+
+    while True:
+ 
+        print >> sys.stderr, 'awaiting connection'
+        (clientSocket, clientAddress) = connectSocket.accept()
+
+        pg.event.pump()
+        keys = pg.key.get_pressed()
+
+        for event in pg.event.get():
+
+            if event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
+
+        if keys[pg.K_EQUALS] or keys[pg.K_KP_PLUS]:
+            rotation_speed += 1
+        elif keys[pg.K_MINUS] or keys[pg.K_KP_MINUS]:
+            rotation_speed -= 1
+
+        yellow_arm.update_end_point()
+
+        print(solver.pointDisplay((int(solver.goal[0]),int(solver.goal[1]))))
+
+        if paint_on:
+            pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
+            pg.draw.circle(surface,paint_color,solver.pointDisplay((int(solver.goal[0]),int(solver.goal[1]))), 10)
+
+
+        screen.fill(LIGHTBLUE)
+        canvas_surface.fill(WHITE)
+        screen.blit(surface, (0,0))
+
+        allsprites.update()
+        allsprites.draw(screen)
+        myfont = pg.font.SysFont("Roboto-Bold", 40)
+        label = myfont.render("roBOB ROSS", 1, WHITE)
+        screen.blit(label, (295, 22))
+
+        myfont = pg.font.SysFont("Roboto", 20)
+        label = myfont.render("A happy little mistake", 1, WHITE)
+        screen.blit(label, (285, 500))
+
+        for i, image in enumerate(images):
+            width = image.get_rect().width
+            height = image.get_rect().height
+            if i < 2 :
+                screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)+(CANVAS_WIDTH_HEIGHT/2)-(height)))
+            else:
+                screen.blit(image, ((SCREEN_WIDTH/2)-(width/2),(SCREEN_HEIGHT/2)-(height/2)))
+
+        rotation_buttons, translation_buttons, paint_buttons = setupButtons(screen, buttons)
+
+        myfont = pg.font.SysFont("Roboto", 14)
+        global image_button
+        if not image_attached:
+            label = myfont.render("Upload", 1, WHITE)
+            image_button = screen.blit(label, (628, 434))
+        else:
+            label = myfont.render("Paint It!", 1, WHITE)
+            image_button = screen.blit(label, (622, 434))
+
+        button_list = setupButtons(screen, buttons)
+        mouse = pg.mouse.get_pressed()
+        pos = pg.mouse.get_pos()
+
+        # move the joints by how much we decided
+        solver.rotatePlanks(rotationVector)
+        # print the target to the screen
+        solver.displayTarget()
+        # calculate plank position in real space and display to screen
+        solver.displayPlanks()
+
+        # compute the Jacobian Transpose
+        jt = solver.computeJacobianTranspose()
+        # compute the target vector
+        tv = solver.computeTargetVector()
+        # compute how far to rotate each joint
+        rotationVector = solver.computeRotationVector(jt, tv)
+        # adjust for framerate
+        rotationVector = solver.adjustForFramerate(rotationVector)
+
+        if mouse[0]:
+            if rotation_buttons[0].collidepoint(pos):
+                yellow_arm.rotateCCW()
+                purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
+                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+                clientSocket.send('0')
+                #if delay == true: 
+                    #sleep 2 seconds
+                    #send 0
+                #else
+                    #send 0
+
+            elif rotation_buttons[1].collidepoint(pos):
+                yellow_arm.rotateCW()
+                purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
+                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+                clientSocket.send('1')
+
+            elif rotation_buttons[2].collidepoint(pos):
+                purple_arm.rotateCCW()
+                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+                clientSocket.send('2')
+
+            elif rotation_buttons[3].collidepoint(pos):
+                purple_arm.rotateCW()
+                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+                clientSocket.send('3')
+
+            elif rotation_buttons[4].collidepoint(pos):
+                green_arm.rotateCCW()
+                clientSocket.send('4')
+
+            elif rotation_buttons[5].collidepoint(pos):
+                green_arm.rotateCW()
+                clientSocket.send('5')
+
+            elif translation_buttons[0].collidepoint(pos):
+                print("PLUS X")
+                x, y = (solver.goal[0]+1, solver.goal[1])
+                solver.goal = (x, y)
+                clientSocket.send('6')
+
+            elif translation_buttons[1].collidepoint(pos):
+                print("MINUS X")
+                x, y = (solver.goal[0]-1, solver.goal[1])
+                solver.goal = (x, y)
+                clientSocket.send('7')
+
+            elif translation_buttons[2].collidepoint(pos):
+                print("PLUS Y")
+                x, y = (solver.goal[0], solver.goal[1]+1)
+                solver.goal = (x, y)
+                clientSocket.send('8')
+
+            elif translation_buttons[3].collidepoint(pos):
+                print("MINUS Y")
+                x, y = (solver.goal[0], solver.goal[1]-1)
+                solver.goal = (x, y)
+                clientSocket.send('9')
+
+            elif paint_buttons[0].collidepoint(pos):
+                if paint_on:
+                    paint_on = False
+                else:
+                    paint_on = True
+
+            elif paint_buttons[1].collidepoint(pos):
+                setDrawColor()
+
+            elif image_button.collidepoint(pos):
+                if image_attached:
+                    image_attached = False
+                else:
+                    setImageToDraw(screen)
+                    image_attached = True
+
+        if image_attached:
+            scaled_down_image = pg.transform.scale(scaled_down_image, (50,50))
+            screen.blit(scaled_down_image, (624,360))
+
+        pg.display.flip()
+
+        pg.display.update()
+        solver.fpsClock.tick(solver.FPS)
+
+    clientSocket.close()
+    pg.quit()
+    sys.exit()
