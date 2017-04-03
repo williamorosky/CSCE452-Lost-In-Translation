@@ -23,6 +23,8 @@ CANVAS_WIDTH_HEIGHT = 350
 
 rotation_speed = 1
 paint_color = WHITE
+rotatingArm = -1
+
 
 paint_on = True
 image_attached = False
