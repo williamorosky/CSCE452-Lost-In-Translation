@@ -10,7 +10,7 @@ from tkColorChooser import askcolor
 
 # default delay is turned off.
 # when true, delay is approximately 2 seconds
-delay = False
+#delay = False
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -369,96 +369,63 @@ if __name__ == "__main__":
             if rotation_buttons[0].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] + 1
+                clientSocket.send("0")
+                """
+                Serverside Delay code if we need it.
                 if delay == True:
                     time.sleep(2)
                     clientSocket.send("0")
                 elif delay == False:
                     clientSocket.send("0")
-
+                """
             elif rotation_buttons[1].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] - 1
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("1")
-                elif delay == False:
-                    clientSocket.send("1")
+                clientSocket.send("1")
 
             elif rotation_buttons[2].collidepoint(pos):
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] + 1
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("2")
-                elif delay == False:
-                    clientSocket.send("2")
+                clientSocket.send("2")
 
             elif rotation_buttons[3].collidepoint(pos):
                 rotatingArm = 1
                 solver.plankAngles[1] = solver.plankAngles[1] - 1
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("3")
-                elif delay == False:
-                    clientSocket.send("3")
+                clientSocket.send("3")
 
             elif rotation_buttons[4].collidepoint(pos):
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] + 1
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("4")
-                elif delay == False:
-                    clientSocket.send("4")
+                clientSocket.send("4")
 
             elif rotation_buttons[5].collidepoint(pos):
                 rotatingArm = 0
                 solver.plankAngles[0] = solver.plankAngles[0] - 1
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("5")
-                elif delay == False:
-                    clientSocket.send("5")
+                clientSocket.send("5")
 
             elif translation_buttons[0].collidepoint(pos):
                 rotatingArm = -1
                 x, y = (solver.goal[0]+1, solver.goal[1])
                 solver.goal = (x, y)
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("6")
-                elif delay == False:
-                    clientSocket.send("6")
+                clientSocket.send("6")
 
             elif translation_buttons[1].collidepoint(pos):
                 rotatingArm = -1
                 x, y = (solver.goal[0]-1, solver.goal[1])
                 solver.goal = (x, y)
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("7")
-                elif delay == False:
-                    clientSocket.send("7")
+                clientSocket.send("7")
 
             elif translation_buttons[2].collidepoint(pos):
                 rotatingArm = -1
                 x, y = (solver.goal[0], solver.goal[1]+1)
                 solver.goal = (x, y)
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("8")
-                elif delay == False:
-                    clientSocket.send("8")
+                clientSocket.send("8")
 
             elif translation_buttons[3].collidepoint(pos):
                 rotatingArm = -1
                 x, y = (solver.goal[0], solver.goal[1]-1)
                 solver.goal = (x, y)
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("9")
-                elif delay == False:
-                    clientSocket.send("9")
+                clientSocket.send("9")
 
             elif paint_buttons[0].collidepoint(pos):
                 if paint_on:

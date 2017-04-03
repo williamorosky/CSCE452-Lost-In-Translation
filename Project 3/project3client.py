@@ -1,11 +1,16 @@
 import socket
 import sys
+import time
 
 import math
 import pygame as pg
 from Tkinter import *
 from tkFileDialog import askopenfilename
 from tkColorChooser import askcolor
+
+# default delay is turned off.
+# when true, delay is approximately 2 seconds
+delay = True
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -292,6 +297,8 @@ if __name__ == "__main__":
             solver.goal = solver.plankEnds[2]
             # solver.computeTargetVector()
 
+        if delay == True:
+            time.sleep(2)
 
         if data:
             if data == "0":
