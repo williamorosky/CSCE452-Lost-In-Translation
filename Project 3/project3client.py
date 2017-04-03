@@ -46,7 +46,7 @@ class IKSolver():
 
         self.planknum = 3
         self.screen = screen
-        self.FPS = 10 # frames per second setting
+        self.FPS = 10 # frames per second setting 
         self.fpsClock = pg.time.Clock()
 
         image1 = pg.image.load('images/greenarm2.png')
@@ -62,7 +62,6 @@ class IKSolver():
         self.plankHeight = image1.get_height()
         self.plankScalars = [(int(self.plankWidth * l/175.0), self.plankHeight) for l in PLANK_LEN]
 
-        print self.plankScalars
         self.targetImg = pg.image.load('images/target.png')
         self.endImg = pg.image.load('images/end.png').convert_alpha()
         self.plankAngles = [0]*3
@@ -75,19 +74,19 @@ class IKSolver():
     def pointDisplay(self, p):
         x, y = p
         return (SCREEN_WIDTH/2 + x, SCREEN_HEIGHT/2 - y)
-
+    
     # convert a point on the screen, (x, y) tuple, to a point in world space
     def pointActual(self, p):
         x, y = p
         return (x - SCREEN_WIDTH/2, -y + SCREEN_HEIGHT/2)
-
+        
     def cross(self, a, b):
         c = [a[1]*b[2] - a[2]*b[1],
              a[2]*b[0] - a[0]*b[2],
              a[0]*b[1] - a[1]*b[0]]
 
         return c
-
+        
     def computeJacobianTranspose(self):
         endx, endy = self.plankEnds[-1]
         jt = []
@@ -97,48 +96,70 @@ class IKSolver():
             js = self.cross((0, 0, 1), (dx, dy, 0))
             jt.append([js[0], js[1]])
         return jt
-
+    
     def computeTargetVector(self):
         endx, endy = self.plankEnds[-1]
         targetx, targety = self.goal
         return [targetx-endx, targety-endy]
-
+        
     def computeRotationVector(self, jacobianTranspose, targetVector):
         rv = []
         for row in jacobianTranspose:
             rv.append(row[0]*targetVector[0] + row[1]*targetVector[1])
         return rv
-
+    
     def adjustForFramerate(self, v):
         for i in range(len(v)):
             v[i] = v[i] / (120 * float(self.FPS))
 
         return v
 
-    def rotatePlanks(self, angles):
-        for i in range(len(self.plankAngles)):
-            self.plankAngles[i] += angles[i]
+    def rotatePlanks(self, angles, rotating):
+        if rotating == -1:
+            for i in range(len(self.plankAngles)):
+                self.plankAngles[i] += angles[i]
+            
+            self.worldAngles[0] = self.plankAngles[0]
+            for a in range(1, len(self.worldAngles)):
+                self.worldAngles[a] = self.worldAngles[a-1] + self.plankAngles[a]
+            
+            theta = math.radians(self.plankAngles[0])
+            x = PLANK_LEN[0] * math.cos(theta)
+            y = PLANK_LEN[0] * math.sin(theta)
+            self.plankEnds[0] = (x, y)
+            for j in range(1, len(self.plankPositions)):
+                self.plankPositions[j] = self.plankEnds[j-1]
+                x0, y0 = self.plankPositions[j]
+                theta += math.radians(self.plankAngles[j])
+                x = x0+PLANK_LEN[j] * math.cos(theta)
+                y = y0+PLANK_LEN[j] * math.sin(theta)
+                self.plankEnds[j] = (x, y)
+        else:
+            self.plankAngles[0] += angles[0]
+            if rotating == 0:
+                self.worldAngles[0] = self.plankAngles[0]
+                for i in range(1, len(self.worldAngles)):
+                    self.worldAngles[i] = self.worldAngles[i-1] + self.plankAngles[i]
+            else:
+                for rotating in range(1, len(self.worldAngles)):
+                    self.worldAngles[rotating] = self.worldAngles[rotating-1] + self.plankAngles[rotating]
 
-        self.worldAngles[0] = self.plankAngles[0]
-        for a in range(1, len(self.worldAngles)):
-            self.worldAngles[a] = self.worldAngles[a-1] + self.plankAngles[a]
-
-        theta = math.radians(self.plankAngles[0])
-        x = PLANK_LEN[0] * math.cos(theta)
-        y = PLANK_LEN[0] * math.sin(theta)
-        self.plankEnds[0] = (x, y)
-        for j in range(1, len(self.plankPositions)):
-            self.plankPositions[j] = self.plankEnds[j-1]
-            x0, y0 = self.plankPositions[j]
-            theta += math.radians(self.plankAngles[j])
-            x = x0+PLANK_LEN[j] * math.cos(theta)
-            y = y0+PLANK_LEN[j] * math.sin(theta)
-            self.plankEnds[j] = (x, y)
+            theta = math.radians(self.plankAngles[0])
+            x = PLANK_LEN[0] * math.cos(theta)
+            y = PLANK_LEN[0] * math.sin(theta)
+            self.plankEnds[0] = (x, y)
+            for j in range(1, len(self.plankPositions)):
+                self.plankPositions[j] = self.plankEnds[j-1]
+                x0, y0 = self.plankPositions[j]
+                theta += math.radians(self.plankAngles[j])
+                x = x0+PLANK_LEN[j] * math.cos(theta)
+                y = y0+PLANK_LEN[j] * math.sin(theta)
+                self.plankEnds[j] = (x, y)
 
         #print self.plankPositions
         #print self.plankEnds
         #print self.plankAngles
-
+        
     def displayPlanks(self):
         for angle, position, scalar, image in zip(self.worldAngles, self.plankPositions, self.plankScalars, self.images):
             stretchedPlank = pg.transform.scale(image, scalar)
@@ -156,124 +177,6 @@ class IKSolver():
         rotRect.center = self.pointDisplay((x, y))
         self.screen.blit(self.targetImg, rotRect)
 
-class Rotator(object):
-    def __init__(self,center,origin,image_angle=0):
-        x_mag = center[0]-origin[0]
-        y_mag = center[1]-origin[1]
-        self.radius = math.hypot(x_mag,y_mag)
-        self.start_angle = math.atan2(-y_mag,x_mag)-math.radians(image_angle)
-
-    def __call__(self,angle,origin):
-        new_angle = math.radians(angle)+self.start_angle
-        new_x = origin[0] + self.radius*math.cos(new_angle)
-        new_y = origin[1] - self.radius*math.sin(new_angle)
-        return (new_x,new_y)
-
-class Joint(pg.sprite.DirtySprite):
-    def __init__(self,image,location,pivot_point="center"):
-        self.original_image = image
-        self.image = self.original_image.copy()
-        self.rect = self.image.get_rect(center=location)
-        self.angle = 0
-        self.hasLink = False
-        self.draw_point = self.rect.midtop
-
-        try:
-            self.set_pivot_point(getattr(self.rect,pivot_point))
-        except TypeError:
-            self.set_pivot_point(pivot_point)
-        self.speed = 3
-        self.speed_ang = 1
-        return super(pg.sprite.DirtySprite, self).__init__()
-
-    def set_pivot_point(self,point):
-        self.pivot_point = list(point)
-        self.pivot_rotator = Rotator(self.rect.center,point,self.angle)
-
-        if self.hasLink:
-            self.link_rotator = Rotator(self.linkedJoint.rect.center, point, self.angle)
-            if self.linkedJoint.hasLink:
-                self.link_link_rotator = Rotator(self.linkedJoint.linkedJoint.rect.center, point, self.angle)
-
-    def set_link_center(self,point):
-        self.link_rotator = Rotator(self.linkedJoint.rect.center, point, self.angle)
-        if self.linkedJoint.hasLink:
-                self.link_link_rotator = Rotator(self.linkedJoint.linkedJoint.rect.center, point, self.angle)
-
-    def rotateCCW(self):
-        self.speed_ang = abs(rotation_speed)
-        if self.speed_ang:
-            self.angle = (self.angle+self.speed_ang)%360
-            new_center = self.pivot_rotator(self.angle, self.pivot_point)
-            self.image = pg.transform.rotate(self.original_image, self.angle)
-            self.rect = self.image.get_rect(center=new_center)
-            if self.hasLink:
-                self.update_end_point()
-                self.linkedJoint.set_pivot_point((self.end_point[0], self.end_point[1]))
-                new_link_center = self.link_rotator(self.angle, self.pivot_point)
-                self.linkedJoint.rect = self.linkedJoint.image.get_rect(center=new_link_center)
-                self.rotateLinkCCW()
-
-
-    def rotateCW(self):
-        self.speed_ang = -1*abs(rotation_speed)
-        if self.speed_ang:
-            self.angle = (self.angle+self.speed_ang)%360
-            new_center = self.pivot_rotator(self.angle,self.pivot_point)
-            self.image = pg.transform.rotate(self.original_image, self.angle)
-            self.rect = self.image.get_rect(center=new_center)
-            if self.hasLink:
-                self.update_end_point()
-                self.linkedJoint.set_pivot_point((self.end_point[0], self.end_point[1]))
-                new_link_center = self.link_rotator(self.angle, self.pivot_point)
-                self.linkedJoint.rect = self.linkedJoint.image.get_rect(center=new_link_center)
-                self.rotateLinkCW()
-
-    def rotateLinkCCW(self):
-        link = self.linkedJoint
-        link.speed_ang = abs(rotation_speed)
-        if link.speed_ang:
-            link.angle = (link.angle+link.speed_ang)%360
-            link.image = pg.transform.rotate(link.original_image, link.angle)
-
-            if link.hasLink:
-                link.update_end_point()
-                link.linkedJoint.set_pivot_point((link.end_point[0], link.end_point[1]))
-                new_link_center = self.link_link_rotator(self.angle, self.pivot_point)
-                link.linkedJoint.rect = link.linkedJoint.image.get_rect(center=new_link_center)
-                link.rotateLinkCCW()
-
-    def rotateLinkCW(self):
-        link = self.linkedJoint
-        link.speed_ang = -1*abs(rotation_speed)
-        if link.speed_ang:
-            link.angle = (link.angle+link.speed_ang)%360
-            link.image = pg.transform.rotate(link.original_image, link.angle)
-
-            if link.hasLink:
-                link.update_end_point()
-                link.linkedJoint.set_pivot_point((link.end_point[0], link.end_point[1]))
-                new_link_center = self.link_link_rotator(self.angle, self.pivot_point)
-                link.linkedJoint.rect = link.linkedJoint.image.get_rect(center=new_link_center)
-                link.rotateLinkCW()
-
-    def update_end_point(self):
-        dx = self.rect.center[0] - self.pivot_point[0]
-        dy = self.rect.center[1] - self.pivot_point[1]
-        self.end_point = list((self.rect.center[0]+dx, self.rect.center[1]+dy))
-
-    def update_draw_point(self):
-        self.update_end_point()
-        dx = self.rect.center[0] - self.pivot_point[0]
-        dy = self.rect.center[1] - self.pivot_point[1]
-        addx = (dx/abs(dx))*10
-        addy = (dx/abs(dx))*10
-        self.draw_point = list((self.end_point[0]+addx, self.end_point[1]+addy))
-
-    def linkJoint(self, Joint):
-        self.linkedJoint = Joint
-        self.hasLink = True
-
 def setupButtons(screen, buttons):
     rotate_ccw_1 = screen.blit(buttons[0], (42, 133))
     rotate_cw_1 = screen.blit(buttons[1], (107, 133))
@@ -282,12 +185,12 @@ def setupButtons(screen, buttons):
     rotate_ccw_3 = screen.blit(buttons[0], (42, 323))
     rotate_cw_3 = screen.blit(buttons[1], (107, 323))
     screen.blit(buttons[6], (42, 418))
-
+    
     plus_x = screen.blit(buttons[2], (660, 133)); #plus_x
     minus_x = screen.blit(buttons[4], (590, 133)); #minus_x
     plus_y = screen.blit(buttons[3], (660, 228)); #plus_y
     minus_y = screen.blit(buttons[5], (590, 228)); #minus_y
-
+    
     surface = pg.Surface((50,50))
     surface = surface.convert_alpha()
     surface.fill(DARKGREY)
@@ -314,8 +217,7 @@ def setDrawColor():
         paint_color = RGB
 
 def setImageToDraw(screen):
-    file_name = askopenfilename()
-    print(file_name)
+    file_name = askopenfilename() 
     image_to_draw = pg.image.load(file_name).convert_alpha()
     global scaled_down_image
     scaled_down_image = pg.transform.scale(image_to_draw, (40,40))
@@ -349,33 +251,13 @@ def initialize():
     paint_off = pg.image.load("images/paintoff.png").convert_alpha()
     paint_off = pg.transform.scale(paint_off, (50,50))
 
-    link1 = pg.image.load("images/greenarm.png").convert_alpha()
-    link1 = pg.transform.scale(link1, (20,185))
-    green_arm = Joint(link1, (SCREEN_WIDTH/2, (SCREEN_HEIGHT/2)+82.5), "midbottom")
-
-    link2 = pg.image.load("images/purplearm.png").convert_alpha()
-    link2 = pg.transform.scale(link2, (185,20))
-    purple_arm = Joint(link2, ((SCREEN_WIDTH/2)+82.5, SCREEN_HEIGHT/2), "midbottom")
-
-    link3 = pg.image.load("images/yellowarm.png").convert_alpha()
-    link3 = pg.transform.scale(link3, (20,185))
-    yellow_arm = Joint(link3, ((SCREEN_WIDTH/2)+165, (SCREEN_HEIGHT/2)-82.5), "midbottom")
-
-    green_arm.linkJoint(purple_arm)
-    purple_arm.linkJoint(yellow_arm)
-    green_arm.set_pivot_point((SCREEN_WIDTH/2, 465))
-    green_arm.update_end_point()
-    purple_arm.set_pivot_point((green_arm.end_point[0], green_arm.end_point[1]))
-    purple_arm.update_end_point()
-    yellow_arm.set_pivot_point((purple_arm.end_point[0], purple_arm.end_point[1]))
-
-    sprites = [green_arm, purple_arm, yellow_arm]
     images = [base, bob_ross, button_backgrounds]
     buttons = [rotate_ccw, rotate_cw, plus_x, plus_y, minus_x, minus_y, paint_on, paint_off]
 
-    return green_arm, purple_arm, yellow_arm, images, buttons, pg.sprite.RenderPlain(sprites)
+    return images, buttons
 
 if __name__ == "__main__":
+
     pg.init()
     screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
     screen.fill(LIGHTBLUE)
@@ -391,14 +273,13 @@ if __name__ == "__main__":
     solver = IKSolver(screen)
 
 
-    green_arm, purple_arm, yellow_arm, images, buttons, allsprites = initialize()
+    images, buttons = initialize()
     rotationVector = [0]*3
 
-    #RECIEVING DATA
     while True:
         data = connectSocket.recv(1)
         print >> sys.stderr, 'received "%s"' % data
-    
+
         pg.event.pump()
         keys = pg.key.get_pressed()
 
@@ -407,27 +288,21 @@ if __name__ == "__main__":
             if event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
-
+        
         if keys[pg.K_EQUALS] or keys[pg.K_KP_PLUS]:
             rotation_speed += 1
         elif keys[pg.K_MINUS] or keys[pg.K_KP_MINUS]:
             rotation_speed -= 1
 
-        yellow_arm.update_end_point()
-
-        print(solver.pointDisplay((int(solver.goal[0]),int(solver.goal[1]))))
-
         if paint_on:
-            pg.draw.circle(surface,paint_color,yellow_arm.end_point, 10)
             pg.draw.circle(surface,paint_color,solver.pointDisplay((int(solver.goal[0]),int(solver.goal[1]))), 10)
-
+            if not rotatingArm == -1:
+                pg.draw.circle(surface,paint_color,solver.pointDisplay((int(solver.plankEnds[2][0]),int(solver.plankEnds[2][1]))), 10)
 
         screen.fill(LIGHTBLUE)
         canvas_surface.fill(WHITE)
         screen.blit(surface, (0,0))
 
-        allsprites.update()
-        allsprites.draw(screen)
         myfont = pg.font.SysFont("Roboto-Bold", 40)
         label = myfont.render("roBOB ROSS", 1, WHITE)
         screen.blit(label, (295, 22))
@@ -460,71 +335,75 @@ if __name__ == "__main__":
         pos = pg.mouse.get_pos()
 
         # move the joints by how much we decided
-        solver.rotatePlanks(rotationVector)
+        solver.rotatePlanks(rotationVector, rotatingArm)
         # print the target to the screen
         solver.displayTarget()
-        # calculate plank position in real space and display to screen
+            # calculate plank position in real space and display to screen
         solver.displayPlanks()
+        
+        if rotatingArm == -1:
+            # compute the Jacobian Transpose
+            jt = solver.computeJacobianTranspose()
+            # compute the target vector
+            tv = solver.computeTargetVector()
+            # compute how far to rotate each joint
+            rotationVector = solver.computeRotationVector(jt, tv)
+            # adjust for framerate
+            rotationVector = solver.adjustForFramerate(rotationVector)
+        else:
+            solver.goal = solver.plankEnds[2]
+            # solver.computeTargetVector()
 
-        # compute the Jacobian Transpose
-        jt = solver.computeJacobianTranspose()
-        # compute the target vector
-        tv = solver.computeTargetVector()
-        # compute how far to rotate each joint
-        rotationVector = solver.computeRotationVector(jt, tv)
-        # adjust for framerate
-        rotationVector = solver.adjustForFramerate(rotationVector)
 
-        if data:
-            if data == '0':
-                yellow_arm.rotateCCW()
-                purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
-                #if delay == true: 
-                    #sleep 2 seconds
-                    #send 0
-                #else
-                    #send 0
+        if mouse[0]:
+            if data == "0":
+                rotatingArm = 2
+                solver.plankAngles[2] = solver.plankAngles[2] + 1
 
-            elif data == '1':
-                yellow_arm.rotateCW()
-                purple_arm.set_link_center((purple_arm.pivot_point[0], purple_arm.pivot_point[1]))
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+            elif data == "1":
+                rotatingArm = 2
+                solver.plankAngles[2] = solver.plankAngles[2] - 1
+                
+            elif data == "2":
+                rotatingArm = 1
+                solver.plankAngles[1] = solver.plankAngles[1] + 1
+                
+            elif data == "3":
+                rotatingArm = 1
+                solver.plankAngles[1] = solver.plankAngles[1] - 1
+                
+            elif data == "4":
+                rotatingArm = 0
+                solver.plankAngles[0] = solver.plankAngles[0] + 1
 
-            elif data == '2':
-                purple_arm.rotateCCW()
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
+            elif data == "5":
+                rotatingArm = 0
+                solver.plankAngles[0] = solver.plankAngles[0] - 1
 
-            elif data == '3':
-                purple_arm.rotateCW()
-                green_arm.set_link_center((green_arm.pivot_point[0], green_arm.pivot_point[1]))
-
-            elif data == '4':
-                green_arm.rotateCCW()
-
-            elif data == '5':
-                green_arm.rotateCW()
-
-            elif data == '6':
+            elif data == "6":
+                rotatingArm = -1
                 print("PLUS X")
                 x, y = (solver.goal[0]+1, solver.goal[1])
                 solver.goal = (x, y)
 
-            elif data == '7':
+            elif data == "7":
+                rotatingArm = -1
                 print("MINUS X")
                 x, y = (solver.goal[0]-1, solver.goal[1])
                 solver.goal = (x, y)
 
-            elif data == '8':
+            elif data == "8":
+                rotatingArm = -1
                 print("PLUS Y")
                 x, y = (solver.goal[0], solver.goal[1]+1)
                 solver.goal = (x, y)
 
-            elif data == '9':
+            elif data == "9":
+                rotatingArm = -1
                 print("MINUS Y")
                 x, y = (solver.goal[0], solver.goal[1]-1)
                 solver.goal = (x, y)
-            """
+
             elif paint_buttons[0].collidepoint(pos):
                 if paint_on:
                     paint_on = False
@@ -540,11 +419,11 @@ if __name__ == "__main__":
                 else:
                     setImageToDraw(screen)
                     image_attached = True
-        
+
         if image_attached:
             scaled_down_image = pg.transform.scale(scaled_down_image, (50,50))
             screen.blit(scaled_down_image, (624,360))
-        """
+
         pg.display.flip()
 
         pg.display.update()
