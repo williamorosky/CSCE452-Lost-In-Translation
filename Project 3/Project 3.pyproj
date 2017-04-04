@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5de110d8-0b55-4ac4-b23d-cc0e04eb7258}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>project3.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId />
+    <InterpreterVersion />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="project3.py" />
+    <Compile Include="project3client.py" />
+    <Compile Include="project3server.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="images\base.png" />
+    <Content Include="images\bobross.png" />
+    <Content Include="images\buttonbackground.png" />
+    <Content Include="images\end.png" />
+    <Content Include="images\greenarm.png" />
+    <Content Include="images\greenarm2.png" />
+    <Content Include="images\minusx.png" />
+    <Content Include="images\minusy.png" />
+    <Content Include="images\paintoff.png" />
+    <Content Include="images\painton.png" />
+    <Content Include="images\plusx.png" />
+    <Content Include="images\plusy.png" />
+    <Content Include="images\purplearm.png" />
+    <Content Include="images\purplearm2.png" />
+    <Content Include="images\rotateccw.png" />
+    <Content Include="images\rotatecw.png" />
+    <Content Include="images\target.png" />
+    <Content Include="images\whitesquare.png" />
+    <Content Include="images\yellowarm.png" />
+    <Content Include="images\yellowarm2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="images" />
+  </ItemGroup>
+  <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
+</Project>
