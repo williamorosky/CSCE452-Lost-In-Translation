@@ -180,13 +180,13 @@ class IKSolver():
             self.screen.blit(rotatedPlank, rotRect)
         endRect = self.endImg.get_rect()
         endRect.center = self.pointDisplay(self.plankEnds[-1])
-        self.screen.blit(self.endImg, endRect)
+        # self.screen.blit(self.endImg, endRect)
 
     def displayTarget(self):
         x, y = self.goal
         rotRect = self.targetImg.get_rect()
         rotRect.center = self.pointDisplay((x, y))
-        self.screen.blit(self.targetImg, rotRect)
+        # self.screen.blit(self.targetImg, rotRect)
 
 def setupButtons(screen, buttons):
     rotate_ccw_1 = screen.blit(buttons[0], (42, 133))
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     canvas_surface = canvas_surface.convert()
     canvas_surface.fill(LIGHTBLUE)
 
-    pg.display.set_caption('Lost in Translation - Client')
+    pg.display.set_caption('Lost in Translation - SLAVE')
     solver = IKSolver(screen)
 
     images, buttons = initialize()
@@ -304,6 +304,7 @@ if __name__ == "__main__":
         for event in pg.event.get():
 
             if event.type == pg.QUIT:
+            	clientSocket.close();
                 pg.quit()
                 sys.exit()
 
@@ -328,6 +329,13 @@ if __name__ == "__main__":
         myfont = pg.font.SysFont("Roboto", 20)
         label = myfont.render("A happy little mistake", 1, WHITE)
         screen.blit(label, (285, 500))
+
+        global delay_label
+        if delay:
+        	delay_label = myfont.render("DELAY: ON", 1, GREEN)
+        else:
+        	delay_label = myfont.render("DELAY: OFF", 1, DARKBLUE)
+        delay_button = screen.blit(delay_label, (55, 500))
 
         for i, image in enumerate(images):
             width = image.get_rect().width
@@ -371,15 +379,20 @@ if __name__ == "__main__":
         else:
             solver.goal = solver.plankEnds[2]
             # solver.computeTargetVector()
-
-        data = connectSocket.recv(1024)
-        print(data)
+        global data
+        if delay:
+        	time.sleep(2)
+        	data = connectSocket.recv(1024)
+        else:
+        	data = connectSocket.recv(1024)
         data = data.replace("RUNNING", "")
+        data = data.replace("DELAYING", "")
+        data = data.replace("ELAYINGD", "")
         print(data)
-        if delay == True:
-            time.sleep(2)
 
         if data:
+        	# if delay == True:
+         #    	time.sleep(2)
             if data == "YELLOW CCW":
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] + 1
@@ -429,6 +442,12 @@ if __name__ == "__main__":
                 
             elif data == "PAINT ON":
                 paint_on = True
+
+            elif data == "DELAY OFF":
+                delay = False
+                
+            elif data == "DELAY ON":
+                delay = True
 
             elif paint_buttons[1].collidepoint(pos):
                 setDrawColor()

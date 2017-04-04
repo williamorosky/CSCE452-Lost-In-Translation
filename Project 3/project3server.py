@@ -8,9 +8,6 @@ from Tkinter import *
 from tkFileDialog import askopenfilename
 from tkColorChooser import askcolor
 
-# default delay is turned off.
-# when true, delay is approximately 2 seconds
-#delay = False
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -30,8 +27,8 @@ rotation_speed = 1
 paint_color = WHITE
 rotatingArm = -1
 
-
 paint_on = True
+delay = False
 image_attached = False
 PLANK_LEN = [175, 175, 175]
 
@@ -178,13 +175,13 @@ class IKSolver():
             self.screen.blit(rotatedPlank, rotRect)
         endRect = self.endImg.get_rect()
         endRect.center = self.pointDisplay(self.plankEnds[-1])
-        self.screen.blit(self.endImg, endRect)
+        # self.screen.blit(self.endImg, endRect)
 
     def displayTarget(self):
         x, y = self.goal
         rotRect = self.targetImg.get_rect()
         rotRect.center = self.pointDisplay((x, y))
-        self.screen.blit(self.targetImg, rotRect)
+        # self.screen.blit(self.targetImg, rotRect)
 
 def setupButtons(screen, buttons):
     rotate_ccw_1 = screen.blit(buttons[0], (42, 133))
@@ -232,6 +229,12 @@ def setImageToDraw(screen):
     scaled_down_image = pg.transform.scale(image_to_draw, (40,40))
     screen.blit(scaled_down_image, (650,387))
 
+def sendTwoSecondsOfRequests(clientSocket):
+    t_end = time.time() + 2
+    while time.time() < t_end:
+        clientSocket.send("DELAYING")
+
+
 def initialize():
 
     base = pg.image.load("images/base.png").convert_alpha()
@@ -278,7 +281,7 @@ if __name__ == "__main__":
     canvas_surface = canvas_surface.convert()
     canvas_surface.fill(LIGHTBLUE)
 
-    pg.display.set_caption('Lost in Translation - Server')
+    pg.display.set_caption('Lost in Translation - MASTER')
     solver = IKSolver(screen)
 
 
@@ -298,6 +301,7 @@ if __name__ == "__main__":
         for event in pg.event.get():
 
             if event.type == pg.QUIT:
+                clientSocket.close();
                 pg.quit()
                 sys.exit()
 
@@ -322,6 +326,13 @@ if __name__ == "__main__":
         myfont = pg.font.SysFont("Roboto", 20)
         label = myfont.render("A happy little mistake", 1, WHITE)
         screen.blit(label, (285, 500))
+
+        global delay_label
+        if delay:
+            delay_label = myfont.render("DELAY: ON", 1, GREEN)
+        else:
+            delay_label = myfont.render("DELAY: OFF", 1, DARKBLUE)
+        delay_button = screen.blit(delay_label, (55, 500))
 
         for i, image in enumerate(images):
             width = image.get_rect().width
@@ -371,6 +382,8 @@ if __name__ == "__main__":
             if rotation_buttons[0].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] + 1
+                # if delay:
+                #   sendTwoSecondsOfRequests(clientSocket)
                 clientSocket.send("YELLOW CCW")
                 """
                 Serverside Delay code if we need it.
@@ -439,6 +452,14 @@ if __name__ == "__main__":
 
             elif paint_buttons[1].collidepoint(pos):
                 setDrawColor()
+
+            elif delay_button.collidepoint(pos):
+                if delay:
+                    clientSocket.send("DELAY OFF")
+                    delay = False
+                else:
+                    clientSocket.send("DELAY ON")
+                    delay = True
 
             elif image_button.collidepoint(pos):
                 if image_attached:
