@@ -216,11 +216,12 @@ def setupButtons(screen, buttons):
 
     return rotation_buttons, translation_buttons, paint_buttons
 
-def setDrawColor():
+def setDrawColor(clientSocket):
     (RGB, hexstr) = askcolor()
     if RGB:
         global paint_color
         paint_color = RGB
+        clientSocket.send(str(RGB))
 
 def setImageToDraw(screen):
     file_name = askopenfilename()
@@ -228,11 +229,6 @@ def setImageToDraw(screen):
     global scaled_down_image
     scaled_down_image = pg.transform.scale(image_to_draw, (40,40))
     screen.blit(scaled_down_image, (650,387))
-
-def sendTwoSecondsOfRequests(clientSocket):
-    t_end = time.time() + 2
-    while time.time() < t_end:
-        clientSocket.send("DELAYING")
 
 
 def initialize():
@@ -382,17 +378,8 @@ if __name__ == "__main__":
             if rotation_buttons[0].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] + 1
-                # if delay:
-                #   sendTwoSecondsOfRequests(clientSocket)
                 clientSocket.send("YELLOW CCW")
-                """
-                Serverside Delay code if we need it.
-                if delay == True:
-                    time.sleep(2)
-                    clientSocket.send("0")
-                elif delay == False:
-                    clientSocket.send("0")
-                """
+
             elif rotation_buttons[1].collidepoint(pos):
                 rotatingArm = 2
                 solver.plankAngles[2] = solver.plankAngles[2] - 1
@@ -451,7 +438,7 @@ if __name__ == "__main__":
                     paint_on = True
 
             elif paint_buttons[1].collidepoint(pos):
-                setDrawColor()
+                setDrawColor(clientSocket)
 
             elif delay_button.collidepoint(pos):
                 if delay:

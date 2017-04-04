@@ -449,6 +449,13 @@ if __name__ == "__main__":
             elif data == "DELAY ON":
                 delay = True
 
+            elif "(" in data:
+            	data = data.replace(" ", "")
+            	data = data.replace("(", "")
+            	data = data.replace(")", "")
+            	rgb_list = data.split(",")
+            	paint_color = (int(rgb_list[0]),int(rgb_list[1]),int(rgb_list[2]))
+
             elif paint_buttons[1].collidepoint(pos):
                 setDrawColor()
 
