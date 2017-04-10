@@ -16,14 +16,15 @@ selected_index = 0
 sprites = []
 rotation_angle = 0
 
-class Vehicle():
+class Object():
 
-    def __init__(self, image, position, angle):
+    def __init__(self, image, position, angle, object_type):
         self.velocity = 3
         self.path = []
         self.image = image
         self.position = position
         self.angle = angle
+        self.object_type = object_type
 
     def calculate_path(self):
         pass
@@ -89,7 +90,8 @@ if __name__ == "__main__":
             screen.blit(toggles[1], (270+((selected_index-1)*92), 78))
 
         for sprite in sprites:
-            sprite.move()
+            if sprite.object_type > 0:
+                sprite.move()
             selected_sprite = sprite.image
             image_rect = selected_sprite.get_rect(center=sprite.position)
             selected_sprite = pg.transform.rotate(selected_sprite, sprite.angle)
@@ -130,18 +132,17 @@ if __name__ == "__main__":
                     selected_index = 0
                 elif mouse_pos[1] > 100:
                     if selected_index == 1:
-                        sprite = Vehicle(buttons[0], mouse_pos, rotation_angle)
+                        sprite = Object(buttons[0], mouse_pos, rotation_angle, 1)
                         sprites.append(sprite)
                     elif selected_index == 2:
-                        sprite = Vehicle(buttons[1], mouse_pos, rotation_angle)
+                        sprite = Object(buttons[1], mouse_pos, rotation_angle, 2)
                         sprites.append(sprite)
                     elif selected_index == 3:
-                        sprite = Vehicle(buttons[2], mouse_pos, rotation_angle)
+                        sprite = Object(buttons[2], mouse_pos, rotation_angle, 0)
                         sprites.append(sprite)
 
         if mouse_pos[1] > 100:
 
-            global selected_sprite
             if selected_index == 1:
                 transparent = buttons[0].copy()
                 transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
