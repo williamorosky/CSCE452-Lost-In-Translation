@@ -14,6 +14,28 @@ SCREEN_HEIGHT = 700
 
 selected_index = 0
 sprites = []
+rotation_angle = 0
+
+class Vehicle():
+
+    def __init__(self, image, position, angle):
+        self.velocity = 3
+        self.path = []
+        self.image = image
+        self.position = position
+        self.angle = angle
+
+    def calculate_path(self):
+        pass
+
+    def simulate_path(self):
+        pass
+
+    def move(self):
+        radians = math.radians(self.angle)
+        x = self.position[0]+math.cos(radians)
+        y = self.position[1]-math.sin(radians)
+        self.position = (x, y)
 
 def initialize():
 
@@ -67,7 +89,12 @@ if __name__ == "__main__":
             screen.blit(toggles[1], (270+((selected_index-1)*92), 78))
 
         for sprite in sprites:
-            screen.blit(sprite[0], sprite[1])
+            sprite.move()
+            selected_sprite = sprite.image
+            image_rect = selected_sprite.get_rect(center=sprite.position)
+            selected_sprite = pg.transform.rotate(selected_sprite, sprite.angle)
+            image_rect = selected_sprite.get_rect(center=image_rect.center)
+            screen.blit(selected_sprite, image_rect)
 
         pg.event.pump()
         keys = pg.key.get_pressed()
@@ -81,48 +108,65 @@ if __name__ == "__main__":
             elif event.type == pg.MOUSEBUTTONUP:
 
                 if afraid.collidepoint(mouse_pos):
+                    rotation_angle = 0
                     if selected_index == 1:
                         selected_index = 0
                     else:
                         selected_index = 1
                 elif attracted.collidepoint(mouse_pos):
+                    rotation_angle = 0
                     if selected_index == 2:
                         selected_index = 0
                     else:
                         selected_index = 2
                 elif light.collidepoint(mouse_pos):
+                    rotation_angle = 0
                     if selected_index == 3:
                         selected_index = 0
                     else:
                         selected_index = 3
                 elif close.collidepoint(mouse_pos):
+                    rotation_angle = 0
                     selected_index = 0
                 elif mouse_pos[1] > 100:
                     if selected_index == 1:
-                        # afraid_copy = screen.blit(buttons[0], mouse_pos)
-                        sprites.append((buttons[0],mouse_pos))
+                        sprite = Vehicle(buttons[0], mouse_pos, rotation_angle)
+                        sprites.append(sprite)
                     elif selected_index == 2:
-                        # attracted_copy = screen.blit(buttons[1], mouse_pos)
-                        sprites.append((buttons[1],mouse_pos))
+                        sprite = Vehicle(buttons[1], mouse_pos, rotation_angle)
+                        sprites.append(sprite)
                     elif selected_index == 3:
-                        sprites.append((buttons[2],mouse_pos))
+                        sprite = Vehicle(buttons[2], mouse_pos, rotation_angle)
+                        sprites.append(sprite)
 
-                    
-            if mouse_pos[1] > 100:
-                # transparent = pg.Surface((43,43))
-                # transparent = transparent.set_alpha(128)
-                if selected_index == 1:
-                    transparent = buttons[0].copy()
-                    transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
-                    afraid_copy = screen.blit(transparent, mouse_pos)
-                elif selected_index == 2:
-                    transparent = buttons[1].copy()
-                    transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
-                    attracted_copy = screen.blit(transparent, mouse_pos)
-                elif selected_index == 3:
-                    transparent = buttons[2].copy()
-                    transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
-                    light_copy = screen.blit(transparent, mouse_pos)
+        if mouse_pos[1] > 100:
+
+            global selected_sprite
+            if selected_index == 1:
+                transparent = buttons[0].copy()
+                transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
+                image_rect = transparent.get_rect(center=mouse_pos)
+                transparent = pg.transform.rotate(transparent, rotation_angle)
+                image_rect = transparent.get_rect(center=image_rect.center)
+                selected_sprite = screen.blit(transparent, image_rect)
+            elif selected_index == 2:
+                transparent = buttons[1].copy()
+                transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
+                image_rect = transparent.get_rect(center=mouse_pos)
+                transparent = pg.transform.rotate(transparent, rotation_angle)
+                image_rect = transparent.get_rect(center=image_rect.center)
+                selected_sprite = screen.blit(transparent, image_rect)
+            elif selected_index == 3:
+                transparent = buttons[2].copy()
+                transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
+                image_rect = transparent.get_rect(center=mouse_pos)
+                transparent = pg.transform.rotate(transparent, rotation_angle)
+                image_rect = transparent.get_rect(center=image_rect.center)
+                selected_sprite = screen.blit(transparent, image_rect)
+
+            if keys[pg.K_r]:
+                rotation_angle += 5
+                rotation_angle = rotation_angle%360
 
         pg.display.flip()
         pg.display.update()
