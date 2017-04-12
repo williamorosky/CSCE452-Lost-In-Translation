@@ -20,17 +20,19 @@ K_matrix = [0, 0, 0, 0]
 
 class Vehicle():
 
-    def __init__(self, image, position, angle, object_type):
+    def __init__(self, image, position, angle, object_type, k11, k12, k21, k22):
         self.velocity = 3
         self.path = []
         self.image = image
         self.position = position
+        self.x, self.y = position
         self.angle = angle
         self.object_type = object_type
-        self.k11 = 1
-        self.k12 = 0
-        self.k21 = 0
-        self.k22 = 1
+        self.k11 = float(k11)
+        self.k12 = float(k12)
+        self.k21 = float(k21)
+        self.k22 = float(k22)
+        self.old_angle = self.angle
 
     def calculate_path(self):
         pass
@@ -183,10 +185,10 @@ if __name__ == "__main__":
                     K_matrix[3] = int(not K_matrix[3])
                 elif mouse_pos[1] > 100:
                     if selected_index == 1:
-                        sprite = Object(buttons[0], mouse_pos, rotation_angle, 1)
+                        sprite = Vehicle(buttons[0], mouse_pos, rotation_angle, 1, K_matrix[0], K_matrix[1], K_matrix[2], K_matrix[3])
                         sprites.append(sprite)
                     elif selected_index == 2:
-                        sprite = Object(buttons[1], mouse_pos, rotation_angle, 0)
+                        sprite = Light(buttons[1], mouse_pos, rotation_angle, 0)
                         sprites.append(sprite)
                         lights.append(sprite)
                 elif close.collidepoint(mouse_pos):
