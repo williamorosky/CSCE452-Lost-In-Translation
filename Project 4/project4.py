@@ -16,6 +16,7 @@ selected_index = 0
 sprites = []
 lights = []
 rotation_angle = 0
+K_matrix = [0, 0, 0, 0]
 
 class Vehicle():
 
@@ -77,11 +78,10 @@ class Light():
 
 def initialize():
 
-    afraid = pg.image.load("images/afraid.png").convert_alpha()
+    string = "images/vehicle_" + str(K_matrix[0]) + str(K_matrix[1]) + str(K_matrix[2]) + str(K_matrix[3]) + ".png"
+    afraid = pg.image.load(string).convert_alpha()
+    afraid = pg.transform.rotate(afraid, -90)
     afraid = pg.transform.scale(afraid, (43,43))
-
-    attracted = pg.image.load("images/attracted.png").convert_alpha()
-    attracted = pg.transform.scale(attracted, (43,43))
 
     close = pg.image.load("images/close.png").convert_alpha()
     close = pg.transform.scale(close, (29,29))
@@ -92,7 +92,7 @@ def initialize():
     selection = pg.image.load("images/selection.png").convert_alpha()
     selection = pg.transform.scale(selection, (65,15))
 
-    buttons = [afraid, attracted, light]
+    buttons = [afraid, light]
     toggles = [close, selection]
 
     return buttons, toggles
@@ -109,22 +109,21 @@ if __name__ == "__main__":
 
     pg.display.set_caption('Lost in Translation')
 
-    buttons, toggles = initialize()
-
     while True:
         
+        buttons, toggles = initialize()
+
         screen.fill(LIGHTBLUE)
         screen.blit(surface, (0,0))
 
         bar = pg.draw.rect(screen, DARKGRAY, (0, 0, SCREEN_WIDTH, 100), 0)
-        afraid = screen.blit(buttons[0], (280, 28))
-        attracted = screen.blit(buttons[1], (372, 28))
-        light = screen.blit(buttons[2], (464, 28))
+        afraid = screen.blit(buttons[0], (334, 28))
+        light = screen.blit(buttons[1], (410, 28))
 
         global close
         if selected_index > 0 :
             close = screen.blit(toggles[0], (740, 35))
-            screen.blit(toggles[1], (270+((selected_index-1)*92), 78))
+            screen.blit(toggles[1], (323+((selected_index-1)*76), 78))
 
         for sprite in sprites:
             if sprite.object_type > 0:
@@ -134,6 +133,22 @@ if __name__ == "__main__":
             selected_sprite = pg.transform.rotate(selected_sprite, sprite.angle)
             image_rect = selected_sprite.get_rect(center=image_rect.center)
             screen.blit(selected_sprite, image_rect)
+
+        matrix_00 = pg.draw.rect(screen, WHITE, (133, 29, 18, 18), 0)
+        matrix_01 = pg.draw.rect(screen, WHITE, (156, 29, 18, 18), 0)
+        matrix_10 = pg.draw.rect(screen, WHITE, (133, 52, 18, 18), 0)
+        matrix_11 = pg.draw.rect(screen, WHITE, (156, 52, 18, 18), 0)
+
+        myfont = pg.font.SysFont("Roboto", 14)
+        label_00 = myfont.render(str(K_matrix[0]), 1, BLACK)
+        label_01 = myfont.render(str(K_matrix[1]), 1, BLACK)
+        label_10 = myfont.render(str(K_matrix[2]), 1, BLACK)
+        label_11 = myfont.render(str(K_matrix[3]), 1, BLACK)
+
+        screen.blit(label_00, (138, 30))
+        screen.blit(label_01, (161, 30))
+        screen.blit(label_10, (138, 53))
+        screen.blit(label_11, (161, 53))
 
         pg.event.pump()
         keys = pg.key.get_pressed()
@@ -152,33 +167,33 @@ if __name__ == "__main__":
                         selected_index = 0
                     else:
                         selected_index = 1
-                elif attracted.collidepoint(mouse_pos):
+                elif light.collidepoint(mouse_pos):
                     rotation_angle = 0
                     if selected_index == 2:
                         selected_index = 0
                     else:
                         selected_index = 2
-                elif light.collidepoint(mouse_pos):
-                    rotation_angle = 0
-                    if selected_index == 3:
-                        selected_index = 0
-                    else:
-                        selected_index = 3
-                elif close.collidepoint(mouse_pos):
-                    rotation_angle = 0
-                    selected_index = 0
+                elif matrix_00.collidepoint(mouse_pos):
+                    K_matrix[0] = int(not K_matrix[0])
+                elif matrix_01.collidepoint(mouse_pos):
+                    K_matrix[1] = int(not K_matrix[1])
+                elif matrix_10.collidepoint(mouse_pos):
+                    K_matrix[2] = int(not K_matrix[2])
+                elif matrix_11.collidepoint(mouse_pos):
+                    K_matrix[3] = int(not K_matrix[3])
                 elif mouse_pos[1] > 100:
                     if selected_index == 1:
-                        sprite = Vehicle(buttons[0], mouse_pos, rotation_angle, 1)
+                        sprite = Object(buttons[0], mouse_pos, rotation_angle, 1)
                         sprites.append(sprite)
                     elif selected_index == 2:
-                        sprite = Vehicle(buttons[1], mouse_pos, rotation_angle, 2)
-                        sprites.append(sprite)
-                    elif selected_index == 3:
-                        sprite = Light(buttons[2], mouse_pos, rotation_angle, 0)
+                        sprite = Object(buttons[1], mouse_pos, rotation_angle, 0)
                         sprites.append(sprite)
                         lights.append(sprite)
-
+                elif close.collidepoint(mouse_pos):
+                        rotation_angle = 0
+                        selected_index = 0
+                    
+                
         if mouse_pos[1] > 100:
 
             if selected_index == 1:
@@ -188,15 +203,9 @@ if __name__ == "__main__":
                 transparent = pg.transform.rotate(transparent, rotation_angle)
                 image_rect = transparent.get_rect(center=image_rect.center)
                 selected_sprite = screen.blit(transparent, image_rect)
+
             elif selected_index == 2:
                 transparent = buttons[1].copy()
-                transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
-                image_rect = transparent.get_rect(center=mouse_pos)
-                transparent = pg.transform.rotate(transparent, rotation_angle)
-                image_rect = transparent.get_rect(center=image_rect.center)
-                selected_sprite = screen.blit(transparent, image_rect)
-            elif selected_index == 3:
-                transparent = buttons[2].copy()
                 transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
                 image_rect = transparent.get_rect(center=mouse_pos)
                 transparent = pg.transform.rotate(transparent, rotation_angle)
