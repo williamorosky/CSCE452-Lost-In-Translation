@@ -16,7 +16,7 @@ selected_index = 0
 sprites = []
 rotation_angle = 0
 
-class Object():
+class Vehicle():
 
     def __init__(self, image, position, angle, object_type):
         self.velocity = 3
@@ -25,6 +25,35 @@ class Object():
         self.position = position
         self.angle = angle
         self.object_type = object_type
+        
+
+    def calculate_path(self):
+        pass
+
+    def simulate_path(self):
+        pass
+
+    def move(self):
+        radians = math.radians(self.angle)
+        x = self.position[0]+math.cos(radians)
+        y = self.position[1]-math.sin(radians)
+        self.position = (x, y)
+
+class Light():
+
+    def __init__(self, image, position, angle, object_type, intensity = 100):
+        self.velocity = 3
+        self.path = []
+        self.image = image
+        self.position = position
+        self._x, self._y = position
+        self.angle = angle
+        self.object_type = object_type
+        self._intensity = float(intensity)
+        
+    def getIntensity(self, x, y):
+        distance = sqrt(float((self._x - x) **2 + (self._y - y)**2) )
+        return self._intensity / distance
 
     def calculate_path(self):
         pass
@@ -132,13 +161,13 @@ if __name__ == "__main__":
                     selected_index = 0
                 elif mouse_pos[1] > 100:
                     if selected_index == 1:
-                        sprite = Object(buttons[0], mouse_pos, rotation_angle, 1)
+                        sprite = Vehicle(buttons[0], mouse_pos, rotation_angle, 1)
                         sprites.append(sprite)
                     elif selected_index == 2:
-                        sprite = Object(buttons[1], mouse_pos, rotation_angle, 2)
+                        sprite = Vehicle(buttons[1], mouse_pos, rotation_angle, 2)
                         sprites.append(sprite)
                     elif selected_index == 3:
-                        sprite = Object(buttons[2], mouse_pos, rotation_angle, 0)
+                        sprite = Light(buttons[2], mouse_pos, rotation_angle, 0)
                         sprites.append(sprite)
 
         if mouse_pos[1] > 100:
