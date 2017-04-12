@@ -105,9 +105,18 @@ class Vehicle():
         s1 = getIntensities(lights, SensorLx, SensorLy)
         s2 = getIntensities(lights, SensorRx, SensorRy)
 
+        w1 = k11 * s1 + k12 * s2
+        w2 = k21 * s1 + k22 * s2
+
+        rotation = math.degrees(math.atan((w2-w1)/(self.Rsensor_staticx-self.Lsensor_staticx)))
+
         radians = math.radians(self.angle)
         x = self.position[0]+math.cos(radians)
         y = self.position[1]-math.sin(radians)
+        self.position = (x, y)
+
+        self.angle = self.angle + rotation
+        self.x, self.y = self.rotate(x,y-(w1+w2)/2, x, y)
         self.position = (x, y)
 
 def initialize():
