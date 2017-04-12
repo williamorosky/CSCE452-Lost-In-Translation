@@ -51,21 +51,12 @@ class Light():
         self.object_type = object_type
         self._intensity = float(intensity)
         
-    def getIntensity(self, x, y):
+    def getIntensityOverDistance(self, x, y):
         distance = sqrt(float((self._x - x) **2 + (self._y - y)**2) )
         return self._intensity / distance
 
-    def calculate_path(self):
-        pass
-
-    def simulate_path(self):
-        pass
-
-    def move(self):
-        radians = math.radians(self.angle)
-        x = self.position[0]+math.cos(radians)
-        y = self.position[1]-math.sin(radians)
-        self.position = (x, y)
+    def getLocation(self):
+        return self._x, self._y
 
 def initialize():
 
