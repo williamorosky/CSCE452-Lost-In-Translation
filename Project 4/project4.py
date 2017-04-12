@@ -1,6 +1,7 @@
 import sys
 import math
 import pygame as pg
+import numpy as np
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -13,11 +14,13 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 700
 
 selected_index = 0
+lights = []
+vehicles = []
 sprites = []
 rotation_angle = 0
 K_matrix = [0, 0, 0, 0]
 
-class Object():
+class Vehicle():
 
     def __init__(self, image, position, angle, object_type):
         self.velocity = 3
@@ -26,6 +29,8 @@ class Object():
         self.position = position
         self.angle = angle
         self.object_type = object_type
+        self.sensor_one = (self.position[0], self.position[1] + 5)
+        self.sensor_two = (self.position[0] + 38, self.position[1] + 5)
 
     def calculate_path(self):
         pass
@@ -34,10 +39,39 @@ class Object():
         pass
 
     def move(self):
+        self.angle = self.angle + self.angular_velocity
         radians = math.radians(self.angle)
         x = self.position[0]+math.cos(radians)
         y = self.position[1]-math.sin(radians)
         self.position = (x, y)
+
+    def calculate_angular_velocity(self):
+        velocity_matrix = [0, 0]
+        for light in lights:
+            intensity_one = light.getIntensityOverDistance(self.sensor_one[0], self.sensor_one[1])
+            intensity_two = light.getIntensityOverDistance(self.sensor_two[0], self.sensor_two[1])
+            sensor_matrix = np.matrix([[intensity_one], [intensity_two]])
+            matrix_k = np.matrix([[K_matrix[0], K_matrix[1]], [K_matrix[2], K_matrix[3]]])
+            velocity_matrix = matrix_k * sensor_matrix
+        self.angular_velocity = (velocity_matrix[0] - velocity_matrix[1]) / 1
+
+class Light():
+    def __init__(self, image, position, angle, object_type, intensity = 100):
+        self.velocity = 3
+        self.path = []
+        self.image = image
+        self.position = position
+        self.x, self.y = position
+        self.angle = angle
+        self.object_type = object_type
+        self.intensity = float(intensity)
+
+    def getIntensityOverDistance(self, x, y):
+        distance = math.sqrt(float((self.x - x) **2 + (self.y - y)**2))
+        return self.intensity / distance
+
+    def getLocation(self):
+        return self.x, self.y
 
 def initialize():
 
@@ -60,7 +94,6 @@ def initialize():
 
     return buttons, toggles
 
-
 if __name__ == "__main__":
 
     pg.init()
@@ -73,7 +106,7 @@ if __name__ == "__main__":
     pg.display.set_caption('Lost in Translation')
 
     while True:
-        
+
         buttons, toggles = initialize()
 
         screen.fill(LIGHTBLUE)
@@ -81,19 +114,26 @@ if __name__ == "__main__":
 
         bar = pg.draw.rect(screen, DARKGRAY, (0, 0, SCREEN_WIDTH, 100), 0)
         afraid = screen.blit(buttons[0], (334, 28))
-        light = screen.blit(buttons[1], (410, 28))
+        light = screen.blit(buttons[1], (464, 28))
 
         global close
         if selected_index > 0 :
             close = screen.blit(toggles[0], (740, 35))
             screen.blit(toggles[1], (323+((selected_index-1)*76), 78))
 
-        for sprite in sprites:
-            if sprite.object_type > 0:
-                sprite.move()
-            selected_sprite = sprite.image
-            image_rect = selected_sprite.get_rect(center=sprite.position)
-            selected_sprite = pg.transform.rotate(selected_sprite, sprite.angle)
+        for v in vehicles:
+            v.calculate_angular_velocity()
+            v.move()
+            selected_sprite = v.image
+            image_rect = selected_sprite.get_rect(center=v.position)
+            selected_sprite = pg.transform.rotate(selected_sprite, v.angle)
+            image_rect = selected_sprite.get_rect(center=image_rect.center)
+            screen.blit(selected_sprite, image_rect)
+
+        for l in lights:
+            selected_sprite = l.image
+            image_rect = selected_sprite.get_rect(center=l.position)
+            selected_sprite = pg.transform.rotate(selected_sprite, l.angle)
             image_rect = selected_sprite.get_rect(center=image_rect.center)
             screen.blit(selected_sprite, image_rect)
 
@@ -130,12 +170,14 @@ if __name__ == "__main__":
                         selected_index = 0
                     else:
                         selected_index = 1
+
                 elif light.collidepoint(mouse_pos):
                     rotation_angle = 0
                     if selected_index == 2:
                         selected_index = 0
                     else:
                         selected_index = 2
+
                 elif matrix_00.collidepoint(mouse_pos):
                     K_matrix[0] = int(not K_matrix[0])
                 elif matrix_01.collidepoint(mouse_pos):
@@ -146,16 +188,17 @@ if __name__ == "__main__":
                     K_matrix[3] = int(not K_matrix[3])
                 elif mouse_pos[1] > 100:
                     if selected_index == 1:
-                        sprite = Object(buttons[0], mouse_pos, rotation_angle, 1)
+                        sprite = Vehicle(buttons[0], mouse_pos, rotation_angle, 1)
+                        vehicles.append(sprite)
                         sprites.append(sprite)
                     elif selected_index == 2:
-                        sprite = Object(buttons[1], mouse_pos, rotation_angle, 0)
+                        sprite = Light(buttons[1], mouse_pos, rotation_angle, 0)
+                        lights.append(sprite)
                         sprites.append(sprite)
                 elif close.collidepoint(mouse_pos):
                         rotation_angle = 0
                         selected_index = 0
-                    
-                
+
         if mouse_pos[1] > 100:
 
             if selected_index == 1:
