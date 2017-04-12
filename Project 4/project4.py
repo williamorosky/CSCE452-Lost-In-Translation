@@ -18,48 +18,6 @@ lights = []
 rotation_angle = 0
 K_matrix = [0, 0, 0, 0]
 
-class Vehicle():
-
-    def __init__(self, image, position, angle, object_type, k11, k12, k21, k22):
-        self.velocity = 3
-        self.path = []
-        self.image = image
-        self.position = position
-        self.x, self.y = position
-        self.angle = angle
-        self.object_type = object_type
-        self.k11 = float(k11)
-        self.k12 = float(k12)
-        self.k21 = float(k21)
-        self.k22 = float(k22)
-        self.old_angle = self.angle
-
-    def calculate_path(self):
-        pass
-
-    def simulate_path(self):
-        pass
-
-    def rotate(self, rx, ry, cx, cy):
-        angle = -self.angle
-
-        x = rx-cx
-        y = ry-cy
-        newx = (x*cos(radians(angle))) - (y*sin(radians(angle)))
-        newy = (x*sin(radians(angle))) + (y*cos(radians(angle)))
-        
-        newx += cx
-        newy += cy
-        
-        return newx,newy
-
-    def move(self):
-        radians = math.radians(self.angle)
-        x = self.position[0]+math.cos(radians)
-        y = self.position[1]-math.sin(radians)
-        self.position = (x, y)
-
-
 class Light():
     def __init__(self, image, position, angle, object_type, intensity = 100):
         self.velocity = 3
@@ -71,12 +29,86 @@ class Light():
         self.object_type = object_type
         self.intensity = float(intensity)
         
+        
     def getIntensityOverDistance(self, x, y):
-        distance = sqrt(float((self.x - x) **2 + (self.y - y)**2))
-        return self._intensity / distance
+        distance = math.sqrt(math.pow(x-self.x,2) + math.pow(y-self.y,2))
+        if distance == 0:
+            return 100
+        else:
+            return self.intensity / distance
 
     def getLocation(self):
         return self.x, self.y
+
+def getIntensities(lights, x, y):
+    SensorVariable = 0
+    for light in lights:
+        SensorVariable += light.getIntensityOverDistance(x, y)
+    return SensorVariable 
+
+class Vehicle():
+
+    def __init__(self, image, position, angle, object_type, k11, k12, k21, k22):
+        self.velocity = 3
+        self.path = []
+        self.image = image
+        self.position = position
+        self.angle = angle
+        self.object_type = object_type
+        self.k11 = float(k11)
+        self.k12 = float(k12)
+        self.k21 = float(k21)
+        self.k22 = float(k22)
+        self.Lsensor_staticx = 26 
+        self.Lsensor_staticy = 12
+        self.Rsensor_staticx = 64
+        self.Rsensor_staticy = 12
+
+    def calculate_path(self):
+        pass
+        """
+        w1 = k11 * s1 + k12 * s2
+        w2 = k21 * s1 + k22 * s2
+        
+        rotation = math.degrees(math.atan((w2-w1)/(Rsensor_staticx-Lsensor_staticx)))
+
+        self.angle = angle + rotation
+        self.x, self.y = self.rotate(x,y-(w1+w2)/2, x, y)
+        self.position = (x, y)
+        """
+
+    def simulate_path(self):
+        pass
+
+    def rotate(self, rx, ry, cx, cy):
+        angle = -self.angle
+
+        x = rx-cx
+        y = ry-cy
+        newx = (x*math.cos(math.radians(angle))) - (y*math.sin(math.radians(angle)))
+        newy = (x*math.sin(math.radians(angle))) + (y*math.cos(math.radians(angle)))
+        
+        newx += cx
+        newy += cy
+        
+        return newx,newy
+
+    def move(self, lights):
+        k11 = self.k11
+        k12 = self.k12
+        k21 = self.k21
+        k22 = self.k22
+        
+        SensorLx, SensorLy = self.rotate(self.Lsensor_staticx, self.Lsensor_staticy, self.position[0], self.position[1])
+        SensorRx, SensorRy = self.rotate(self.Rsensor_staticx, self.Rsensor_staticy, self.position[0], self.position[1])
+
+        s1 = getIntensities(lights, SensorLx, SensorLy)
+        s2 = getIntensities(lights, SensorRx, SensorRy)
+
+        radians = math.radians(self.angle)
+        x = self.position[0]+math.cos(radians)
+        y = self.position[1]-math.sin(radians)
+        self.position = (x, y)
 
 def initialize():
 
@@ -129,7 +161,7 @@ if __name__ == "__main__":
 
         for sprite in sprites:
             if sprite.object_type > 0:
-                sprite.move()
+                sprite.move(lights)
             selected_sprite = sprite.image
             image_rect = selected_sprite.get_rect(center=sprite.position)
             selected_sprite = pg.transform.rotate(selected_sprite, sprite.angle)
