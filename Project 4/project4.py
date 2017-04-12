@@ -14,6 +14,7 @@ SCREEN_HEIGHT = 700
 
 selected_index = 0
 sprites = []
+lights = []
 rotation_angle = 0
 
 class Vehicle():
@@ -25,7 +26,10 @@ class Vehicle():
         self.position = position
         self.angle = angle
         self.object_type = object_type
-        
+        self.k11 = 1
+        self.k12 = 0
+        self.k21 = 0
+        self.k22 = 1
 
     def calculate_path(self):
         pass
@@ -33,30 +37,43 @@ class Vehicle():
     def simulate_path(self):
         pass
 
+    def rotate(self, rx, ry, cx, cy):
+        angle = -self.angle
+
+        x = rx-cx
+        y = ry-cy
+        newx = (x*cos(radians(angle))) - (y*sin(radians(angle)))
+        newy = (x*sin(radians(angle))) + (y*cos(radians(angle)))
+        
+        newx += cx
+        newy += cy
+        
+        return newx,newy
+
     def move(self):
         radians = math.radians(self.angle)
         x = self.position[0]+math.cos(radians)
         y = self.position[1]-math.sin(radians)
         self.position = (x, y)
 
-class Light():
 
+class Light():
     def __init__(self, image, position, angle, object_type, intensity = 100):
         self.velocity = 3
         self.path = []
         self.image = image
         self.position = position
-        self._x, self._y = position
+        self.x, self.y = position
         self.angle = angle
         self.object_type = object_type
-        self._intensity = float(intensity)
+        self.intensity = float(intensity)
         
     def getIntensityOverDistance(self, x, y):
-        distance = sqrt(float((self._x - x) **2 + (self._y - y)**2) )
+        distance = sqrt(float((self.x - x) **2 + (self.y - y)**2))
         return self._intensity / distance
 
     def getLocation(self):
-        return self._x, self._y
+        return self.x, self.y
 
 def initialize():
 
@@ -160,6 +177,7 @@ if __name__ == "__main__":
                     elif selected_index == 3:
                         sprite = Light(buttons[2], mouse_pos, rotation_angle, 0)
                         sprites.append(sprite)
+                        lights.append(sprite)
 
         if mouse_pos[1] > 100:
 
