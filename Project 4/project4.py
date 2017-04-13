@@ -18,17 +18,19 @@ lights = []
 vehicles = []
 sprites = []
 rotation_angle = 0
+matrices = []
 K_matrix = [0, 0, 0, 0]
 
 class Vehicle():
 
-    def __init__(self, image, position, angle, object_type):
+    def __init__(self, image, position, angle, object_type, matrix):
         self.velocity = 3
         self.path = []
         self.image = image
         self.position = position
         self.angle = angle
         self.object_type = object_type
+        self.matrix = matrix
         radians = math.radians(self.angle+90)
         self.sensor_one = (self.position[0] + 15*math.cos(radians), self.position[1] - 15*math.sin(radians))
         self.sensor_two = (self.position[0] - 15*math.cos(radians), self.position[1] + 15*math.sin(radians))
@@ -57,9 +59,8 @@ class Vehicle():
             intensity_one += light.getIntensityOverDistance(self.sensor_one[0], self.sensor_one[1])
             intensity_two += light.getIntensityOverDistance(self.sensor_two[0], self.sensor_two[1])
         sensor_matrix = np.matrix([[intensity_one], [intensity_two]])
-        matrix_k = np.matrix([[K_matrix[0], K_matrix[1]], [K_matrix[2], K_matrix[3]]])
+        matrix_k = np.matrix([[self.matrix[0], self.matrix[1]], [self.matrix[2], self.matrix[3]]])
         velocity_matrix = matrix_k * sensor_matrix
-        print(velocity_matrix)
         self.angular_velocity = math.degrees(math.atan(velocity_matrix[0] - velocity_matrix[1]) / 38)
 
 class Light():
@@ -128,7 +129,9 @@ if __name__ == "__main__":
             close = screen.blit(toggles[0], (740, 35))
             screen.blit(toggles[1], (323+((selected_index-1)*76), 78))
 
-        for v in vehicles:
+        for index, v in enumerate(vehicles):
+            v.matrix = matrices[index] 
+            print(matrices[index])
             v.calculate_angular_velocity()
             v.move()
             selected_sprite = v.image
@@ -195,9 +198,12 @@ if __name__ == "__main__":
                     K_matrix[3] = int(not K_matrix[3])
                 elif mouse_pos[1] > 100:
                     if selected_index == 1:
-                        sprite = Vehicle(buttons[0], mouse_pos, rotation_angle, 1)
+                        print("ADDED")
+                        sprite = Vehicle(buttons[0], mouse_pos, rotation_angle, 1, K_matrix)
                         vehicles.append(sprite)
                         sprites.append(sprite)
+                        new_list = list(K_matrix)
+                        matrices.append(new_list)
                     elif selected_index == 2:
                         sprite = Light(buttons[1], mouse_pos, rotation_angle, 0)
                         lights.append(sprite)
