@@ -29,8 +29,8 @@ class Vehicle():
         self.position = position
         self.angle = angle
         self.object_type = object_type
-        self.sensor_one = (self.position[0], self.position[1] + 5)
-        self.sensor_two = (self.position[0] + 38, self.position[1] + 5)
+        self.sensor_one = (self.position[0] + 38, self.position[1] + 5)
+        self.sensor_two = (self.position[0] + 38, self.position[1] + 38)
 
     def calculate_path(self):
         pass
@@ -47,13 +47,15 @@ class Vehicle():
 
     def calculate_angular_velocity(self):
         velocity_matrix = [0, 0]
+        intensity_one = 0
+        intensity_two = 0
         for light in lights:
-            intensity_one = light.getIntensityOverDistance(self.sensor_one[0], self.sensor_one[1])
-            intensity_two = light.getIntensityOverDistance(self.sensor_two[0], self.sensor_two[1])
-            sensor_matrix = np.matrix([[intensity_one], [intensity_two]])
-            matrix_k = np.matrix([[K_matrix[0], K_matrix[1]], [K_matrix[2], K_matrix[3]]])
-            velocity_matrix = matrix_k * sensor_matrix
-        self.angular_velocity = (velocity_matrix[0] - velocity_matrix[1]) / 1
+            intensity_one += light.getIntensityOverDistance(self.sensor_one[0], self.sensor_one[1])
+            intensity_two += light.getIntensityOverDistance(self.sensor_two[0], self.sensor_two[1])
+        sensor_matrix = np.matrix([[intensity_one], [intensity_two]])
+        matrix_k = np.matrix([[K_matrix[0], K_matrix[1]], [K_matrix[2], K_matrix[3]]])
+        velocity_matrix = matrix_k * sensor_matrix
+        self.angular_velocity = math.degrees(math.atan(velocity_matrix[0] - velocity_matrix[1]) / 38)
 
 class Light():
     def __init__(self, image, position, angle, object_type, intensity = 100):
