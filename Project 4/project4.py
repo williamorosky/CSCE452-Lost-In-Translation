@@ -29,8 +29,9 @@ class Vehicle():
         self.position = position
         self.angle = angle
         self.object_type = object_type
-        self.sensor_one = (self.position[0] + 38, self.position[1] + 5)
-        self.sensor_two = (self.position[0] + 38, self.position[1] + 38)
+        radians = math.radians(self.angle+90)
+        self.sensor_one = (self.position[0] + 15*math.cos(radians), self.position[1] - 15*math.sin(radians))
+        self.sensor_two = (self.position[0] - 15*math.cos(radians), self.position[1] + 15*math.sin(radians))
 
     def calculate_path(self):
         pass
@@ -44,6 +45,9 @@ class Vehicle():
         x = self.position[0]+math.cos(radians)
         y = self.position[1]-math.sin(radians)
         self.position = (x, y)
+        radians_plus90 = math.radians(self.angle+90)
+        self.sensor_one = (self.position[0] + 15*math.cos(radians_plus90), self.position[1] - 15*math.sin(radians_plus90))
+        self.sensor_two = (self.position[0] - 15*math.cos(radians_plus90), self.position[1] + 15*math.sin(radians_plus90))
 
     def calculate_angular_velocity(self):
         velocity_matrix = [0, 0]
@@ -55,6 +59,7 @@ class Vehicle():
         sensor_matrix = np.matrix([[intensity_one], [intensity_two]])
         matrix_k = np.matrix([[K_matrix[0], K_matrix[1]], [K_matrix[2], K_matrix[3]]])
         velocity_matrix = matrix_k * sensor_matrix
+        print(velocity_matrix)
         self.angular_velocity = math.degrees(math.atan(velocity_matrix[0] - velocity_matrix[1]) / 38)
 
 class Light():
@@ -116,7 +121,7 @@ if __name__ == "__main__":
 
         bar = pg.draw.rect(screen, DARKGRAY, (0, 0, SCREEN_WIDTH, 100), 0)
         afraid = screen.blit(buttons[0], (334, 28))
-        light = screen.blit(buttons[1], (464, 28))
+        light = screen.blit(buttons[1], (410, 28))
 
         global close
         if selected_index > 0 :
@@ -222,6 +227,7 @@ if __name__ == "__main__":
             if keys[pg.K_r]:
                 rotation_angle += 5
                 rotation_angle = rotation_angle%360
+
 
         pg.display.flip()
         pg.display.update()
