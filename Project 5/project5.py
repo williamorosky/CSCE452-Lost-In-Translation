@@ -69,27 +69,50 @@ def decomp(start, end, obstacles):
                     ((y <= o.position[1] - o.size[1]/2) or (y >= o.position[1] + o.size[1]/2))):
                     vertices.append((x,y))
                     g.add_node((x,y))
-    """
+
+    #SOMETHING IS GOING WRONG IN THIS LOOP
     for v in vertices:
-        if(((v[0] >= start[0] - grid) and (v[0] <= start[0] + grid)) and
-           ((v[1] >= start[1] - grid) and (v[1] <= start[1] + grid))):
-               g.add_edge(start, v)
-        elif(((v[0] >= end[0] - grid) and (v[0] <= end[0] + grid)) and
-           ((v[1] >= end[1] - grid) and (v[1] <= end[1] + grid))):
-               g.add_edge(end, v)
+        #first set of ifs and elifs adds neighhors of start
+        #if v is to the left of and below start
+        if(((v[0] <= start[0]) and (v[0] + grid >= start[0])) and
+           ((v[1] >= start[1]) and (v[1] - grid <= start[1]))):
+            g.add_edge(start, v)
 
-    """
-    for r in range(0, rows):
-        y = r * 5
-        for c in range(0, columns):
-            x = 72 + c * 5
-            if(((x >= start[0] - grid) and (x <= start[0] + grid)) and
-               ((y >= start[1] - grid) and (y <= start[1] + grid))):
-               g.add_edge(start, (x,y))
+        #if v is to the right of and below start
+        elif(((v[0] >= start[0]) and (v[0] - grid <= start[0])) and
+           ((v[1] >= start[1]) and (v[1] - grid <= start[1]))):
+            g.add_edge(start, v)
 
-            elif(((x >= end[0] - grid) and (x <= end[0] + grid)) and
-               ((y >= end[1] - grid) and (y <= end[1] + grid))):
-               g.add_edge(end, (x,y))
+        #if v is to the right of and above start
+        elif(((v[0] >= start[0]) and (v[0] - grid <= start[0])) and
+           ((v[1] <= start[1]) and (v[1] + grid >= start[1]))):
+            g.add_edge(start, v)
+
+        #if v is to the left and above start
+        elif(((v[0] <= start[0]) and (v[0] + grid >= start[0])) and
+           ((v[1] <= start[1]) and (v[1] + grid >= start[1]))):
+            g.add_edge(start, v)
+
+        #set of ifs and elifs for adding neighbors of end
+        #if v is to the left and below end
+        if(((v[0] <= end[0]) and (v[0] + grid >= end[0])) and
+           ((v[1] >= end[1]) and (v[1] - grid <= end[1]))):
+            g.add_edge(end, v)
+
+        #if v is to the right and below end
+        elif(((v[0] >= end[0]) and (v[0] - grid <= end[0])) and
+           ((v[1] >= end[1]) and (v[1] - grid <= end[1]))):
+            g.add_edge(end, v)
+        
+        #if v is to the right and above end
+        elif(((v[0] >= end[0]) and (v[0] - grid <= end[0])) and
+           ((v[1] <= end[1]) and (v[1] + grid >= end[1]))):
+            g.add_edge(end, v)
+        
+        #if v is to the left and above end
+        elif(((v[0] <= end[0]) and (v[0] + grid >= end[0])) and
+           ((v[1] <= end[1]) and (v[1] + grid >= end[1]))):
+            g.add_edge(end, v)
 
     for v in vertices:
         for n in vertices:
@@ -99,8 +122,9 @@ def decomp(start, end, obstacles):
                 ((n[0] == v[0]) and (n[1] == (v[1] - grid)))):
                 edges.append((v,n))
                 g.add_edge(v, n)
+
     
-    print(nx.shortest_path(g,start,vertices[12]))
+    print(nx.shortest_path(g,start,end))
     print("end decomp")
 
 def dijsktra(graph, initial): #algorithm to adapt to our implementation
