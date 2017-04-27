@@ -27,9 +27,9 @@ class Obstacle():
         self.position = position
         self.size = size
         self.color = color
-    
+
     #Should check if x is inside an obstacle
-    #returns true if inside obstacle, false otherwise. 
+    #returns true if inside obstacle, false otherwise.
     def isInObstacle(self, x, y):
         if self.position[0] > x and  x < self.position[0]+self.size:
             if self.position[1] > y and  y < self.position[1]+self.size:
@@ -46,6 +46,46 @@ def draw(surface, start, end):
     pg.draw.line(surface, BLACK, start.position, end.position, 4)
     #changed it to black to better see the line.
 
+def decomp(start, end, obstacles):
+    rows = 100
+    columns = 100
+    grid = 5
+    vertices = []
+    edges = []
+    distance = [][]
+    path = []
+
+    for r in range(0, rows):
+        y = r * 5
+        for c in range(0, columns):
+            x = 72 + c * 5
+            for o in obstacles:
+                if (((x <= o.position[0] - o.size[0]/2) or (x >= o.position[0] + o.size[0]/2)) and
+                    ((y <= o.position[1] - o.size[1]/2) or (y >= o.position[1] + o.size[1]/2))):
+                    vertices.append((x,y))
+
+    for v in vertices:
+        for n in vertices:
+            if (((n[0] == (v[0] + grid)) and (n[1] == v[1])) or
+                ((n[0] == (v[0] - grid)) and (n[1] == v[1])) or
+                ((n[0] == v[0]) and (n[1] == (v[1] + grid))) or
+                ((n[0] == v[0]) and (n[1] == (v[1] - grid)))):
+                edges.append((v,n))
+
+    """
+    for v in vertices:
+        for n in vertices:
+            distance[v][n] = float("inf")
+
+    for v in vertices:
+        for n in vertices:
+            for m in vertices:
+                distance[n][m] = min(distance[n][m], distance[n][v] + distance[v][m])
+                path.append((n,m))
+    """
+
+
+
 def dijsktra(graph, initial): #algorithm to adapt to our implementation
     unvisited = []
     w, h = pygame.display.get_surface().get_size()
@@ -58,11 +98,11 @@ def dijsktra(graph, initial): #algorithm to adapt to our implementation
                     valid = False
             if valid is True:
                 unvisited.append(pair(x,y))
-                
+
 
     visited = {initial: 0}
     path = {}
-    
+
     nodes = set(graph.nodes)
 
     while nodes:
@@ -127,7 +167,7 @@ if __name__ == "__main__":
 
     pg.display.set_caption('Lost in Translation')
 
-    while True:
+    while len(obstacles) < 1:
 
         buttons = initialize()
 
@@ -226,7 +266,7 @@ if __name__ == "__main__":
                             bar = pg.draw.rect(screen, DARKGREEN, (mouse_pos[0]-100, mouse_pos[1]-100, 200, 200), 0)
                             sprite = Obstacle(buttons[5], (mouse_pos[0]-100,mouse_pos[1]-100), (200,200), DARKGREEN)
                             obstacles.append(sprite)
-                        else: 
+                        else:
                             bar = pg.draw.rect(screen, DARKGREEN, (mouse_pos[0]-100, mouse_pos[1]-100, 200, 200), 0)
                             sprite = Obstacle(buttons[5], (mouse_pos[0]-100,mouse_pos[1]-100), (200,200), DARKGREEN)
                             obstacles.append(sprite)
@@ -287,5 +327,7 @@ if __name__ == "__main__":
         pg.display.flip()
         pg.display.update()
 
+    vertices, edges = decomp(start, end, obstacles)
+    get_path(start, end, vertices, edges)
     pg.quit()
     sys.exit()
