@@ -2,6 +2,7 @@ import sys
 import math
 import pygame as pg
 import numpy as np
+import networkx as nx
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -19,6 +20,8 @@ SCREEN_HEIGHT = 500
 selected_index = 0
 obstacles = []
 endpoints = []
+global has_path
+has_path = False
 
 class Obstacle():
 
@@ -28,113 +31,68 @@ class Obstacle():
         self.size = size
         self.color = color
 
-    #Should check if x is inside an obstacle
-    #returns true if inside obstacle, false otherwise.
-    def isInObstacle(self, x, y):
-        if self.position[0] > x and  x < self.position[0]+self.size:
-            if self.position[1] > y and  y < self.position[1]+self.size:
-                return True
-        return False
-
 class Endpoint():
     def __init__(self, image, position, is_start):
         self.image = image
         self.position = position
         self.is_start = is_start
 
-def draw(surface, start, end):
-    pg.draw.line(surface, BLACK, start.position, end.position, 4)
+def draw_line(surface, start, end):
+    for i, point in enumerate(path):
+        if i == 0:
+            pg.draw.line(surface, BLACK, start.position, point, 4)
+        elif i == (len(path)-1):
+            pg.draw.line(surface, BLACK, point, end.position, 4)
+        else:
+            pg.draw.line(surface, BLACK, point, path[i+1], 4)
+
     #changed it to black to better see the line.
 
-def decomp(start, end, obstacles):
-    rows = 100
-    columns = 100
-    grid = 5
+
+
+def decomp(surface, start, end, obstacles):
+    print("Running Decomp")
+    print(start)
+    print(end)
+    rows = 50
+    columns = 50
+    grid = 10
     vertices = []
     edges = []
-    distance = [][]
-    path = []
+    g = nx.Graph()
+
+    vertices.append(start)
+    vertices.append(end)
+    
+    obstacle_vertices = []
+    for o in obstacles:
+        for x in range(o.position[0]-10, o.position[0] + o.size[0]+10):
+            for y in range(o.position[1]-10, o.position[1] + o.size[1]+10):
+                obstacle_vertices.append((x,y))
 
     for r in range(0, rows):
-        y = r * 5
+        y = r * grid
         for c in range(0, columns):
-            x = 72 + c * 5
-            for o in obstacles:
-                if (((x <= o.position[0] - o.size[0]/2) or (x >= o.position[0] + o.size[0]/2)) and
-                    ((y <= o.position[1] - o.size[1]/2) or (y >= o.position[1] + o.size[1]/2))):
-                    vertices.append((x,y))
+            x = 72 + c * grid
+            if not ((x,y) in obstacle_vertices):
+                vertices.append((x,y))
+
+    for i, v in enumerate(vertices):
+        g.add_node(v)
 
     for v in vertices:
         for n in vertices:
-            if (((n[0] == (v[0] + grid)) and (n[1] == v[1])) or
-                ((n[0] == (v[0] - grid)) and (n[1] == v[1])) or
-                ((n[0] == v[0]) and (n[1] == (v[1] + grid))) or
-                ((n[0] == v[0]) and (n[1] == (v[1] - grid)))):
+            if(((n[0] <= (v[0] + grid)) and (n[0] >= (v[0] - grid))) and
+                ((n[1] <= (v[1] + grid)) and (n[1] >= (v[1] - grid)))):
                 edges.append((v,n))
 
-    """
-    for v in vertices:
-        for n in vertices:
-            distance[v][n] = float("inf")
+    for e in edges:
+        g.add_edge(e[0], e[1])
 
-    for v in vertices:
-        for n in vertices:
-            for m in vertices:
-                distance[n][m] = min(distance[n][m], distance[n][v] + distance[v][m])
-                path.append((n,m))
-    """
+    global path
+    path = nx.shortest_path(g, source = start, target = end)
+    print("end decomp 2")
 
-
-
-def dijsktra(graph, initial): #algorithm to adapt to our implementation
-    unvisited = []
-    w, h = pygame.display.get_surface().get_size()
-    for x in range (0,w):
-        for y in range(0,h):
-            valid = True
-            #ommiting obstacles from graph
-            for obstacle in obstacles:
-                if obstacle.isInObstacle(x,y):
-                    valid = False
-            if valid is True:
-                unvisited.append(pair(x,y))
-
-
-    visited = {initial: 0}
-    path = {}
-
-    nodes = set(graph.nodes)
-
-    while nodes:
-        min_node = None
-        for node in nodes:
-            if node in visited:
-                if min_node is None:
-                    min_node = node
-                elif visited[node] < visited[min_node]:
-                    min_node = node
-
-        if min_node is None:
-            break
-
-    nodes.remove(min_node)
-    current_weight = visited[min_node]
-
-    for edge in graph.edges[min_node]:
-        weight = current_weight + graph.distances[(min_node, edge)]
-        if edge not in visited or weight < visited[edge]:
-            visited[edge] = weight
-            path[edge] = min_node
-
-    return visited, path
-
-def find_path(surface):
-    if (len(endpoints) == 2):
-        if (startpoint.is_start == True for startpoint in endpoints):
-            start = [startpoint for startpoint in endpoints if startpoint.is_start == True]
-            if (endpoint.is_start == False for endpoint in endpoints):
-                end = [endpoint for endpoint in endpoints if endpoint.is_start == False]
-                draw(surface, start[0], end[0])
 
 def initialize():
     run = pg.image.load("images/run.png").convert_alpha()
@@ -158,6 +116,9 @@ def initialize():
 
 if __name__ == "__main__":
 
+    start_pos = (0,0)
+    end_pos = (0,0)
+
     pg.init()
     screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
     screen.fill(LIGHTBLUE)
@@ -167,7 +128,7 @@ if __name__ == "__main__":
 
     pg.display.set_caption('Lost in Translation')
 
-    while len(obstacles) < 1:
+    while True:
 
         buttons = initialize()
 
@@ -212,7 +173,14 @@ if __name__ == "__main__":
             elif event.type == pg.MOUSEBUTTONUP:
                 if run.collidepoint(mouse_pos):
                     selected_index = 0
-                    find_path(surface)
+                    decomp(surface, start_pos, end_pos, obstacles)
+                    if (len(endpoints) == 2):
+                        if (startpoint.is_start == True for startpoint in endpoints):
+                            start = [startpoint for startpoint in endpoints if startpoint.is_start == True]
+                            if (endpoint.is_start == False for endpoint in endpoints):
+                                end = [endpoint for endpoint in endpoints if endpoint.is_start == False]
+                                draw_line(surface, start[0], end[0])
+                                has_path = True
 
                 elif start.collidepoint(mouse_pos):
                     if selected_index == 1:
@@ -242,6 +210,7 @@ if __name__ == "__main__":
 
                 elif mouse_pos[0] > 100:
                     if selected_index == 1:
+                        start_pos = mouse_pos
                         if any(endpoint.is_start == True for endpoint in endpoints):
                             end = [endpoint for endpoint in endpoints if endpoint.is_start == True]
                             endpoints.remove(end[0])
@@ -251,6 +220,7 @@ if __name__ == "__main__":
                             sprite = Endpoint(buttons[1], mouse_pos, True)
                             endpoints.append(sprite)
                     elif selected_index == 2:
+                        end_pos = mouse_pos
                         if any(endpoint.is_start == False for endpoint in endpoints):
                             end = [endpoint for endpoint in endpoints if endpoint.is_start == False]
                             endpoints.remove(end[0])
@@ -323,11 +293,11 @@ if __name__ == "__main__":
                 transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
                 image_rect = transparent.get_rect(center=mouse_pos)
                 selected_sprite = screen.blit(transparent, image_rect)
+        # if has_path:
 
         pg.display.flip()
         pg.display.update()
 
-    vertices, edges = decomp(start, end, obstacles)
-    get_path(start, end, vertices, edges)
+    #get_path(start, end, vertices, edges)
     pg.quit()
     sys.exit()
