@@ -20,6 +20,8 @@ SCREEN_HEIGHT = 500
 selected_index = 0
 obstacles = []
 endpoints = []
+global has_path
+has_path = False
 
 class Obstacle():
 
@@ -35,48 +37,20 @@ class Endpoint():
         self.position = position
         self.is_start = is_start
 
-def draw(surface, start, end):
-    pg.draw.line(surface, BLACK, start.position, end.position, 4)
+def draw_line(surface, start, end):
+    for i, point in enumerate(path):
+        if i == 0:
+            pg.draw.line(surface, BLACK, start.position, point, 4)
+        elif i == (len(path)-1):
+            pg.draw.line(surface, BLACK, point, end.position, 4)
+        else:
+            pg.draw.line(surface, BLACK, point, path[i+1], 4)
+
     #changed it to black to better see the line.
 
 
-def find_path(surface, start, end, obstacles):
-    vertices = []
-    edges = []
-    g = nx.Graph()
 
-    print("Running Decomp")
-    print(start)
-    print(end)
-
-    vertices.append(start)
-    vertices.append(end)
-
-    print(vertices)
-
-    for x in range(72,572):
-        for y in range(0,500):
-            for o in obstacles:
-                if (((x <= o.position[0] - o.size[0]/2) or (x >= o.position[0] + o.size[0]/2)) and
-                    ((y <= o.position[1] - o.size[1]/2) or (y >= o.position[1] + o.size[1]/2))):
-                    vertices.append((x,y))
-
-    for v in vertices:
-        g.add_node(v)
-        for n in vertices:
-            if (((n[0] == (v[0] + 1)) and (n[1] == v[1])) or
-                ((n[0] == (v[0] - 1)) and (n[1] == v[1])) or
-                ((n[0] == v[0]) and (n[1] == (v[1] + 1))) or
-                ((n[0] == v[0]) and (n[1] == (v[1] - 1)))):
-                edges.append((v,n))
-                g.add_edge(v, n)
-
-    print(g.nodes())
-    print(g.neighbors(start))
-    #print(nx.shortest_path(g,source = start,target = end))
-    print("end decomp")
-
-def decomp(start, end, obstacles):
+def decomp(surface, start, end, obstacles):
     print("Running Decomp")
     print(start)
     print(end)
@@ -90,40 +64,21 @@ def decomp(start, end, obstacles):
     vertices.append(start)
     vertices.append(end)
     
+    obstacle_vertices = []
+    for o in obstacles:
+        for x in range(o.position[0]-10, o.position[0] + o.size[0]+10):
+            for y in range(o.position[1]-10, o.position[1] + o.size[1]+10):
+                obstacle_vertices.append((x,y))
+
     for r in range(0, rows):
         y = r * grid
         for c in range(0, columns):
             x = 72 + c * grid
-            for o in obstacles:
-                if (((x <= o.position[0] - o.size[0]/2) or (x >= o.position[0] + o.size[0]/2)) and
-                    ((y <= o.position[1] - o.size[1]/2) or (y >= o.position[1] + o.size[1]/2))):
-                    vertices.append((x,y))
+            if not ((x,y) in obstacle_vertices):
+                vertices.append((x,y))
 
-    for v in vertices:
+    for i, v in enumerate(vertices):
         g.add_node(v)
-
-    """
-    for v in vertices:
-        if(((v[0] >= start[0] - grid) and (v[0] <= start[0] + grid)) and
-           ((v[1] >= start[1] - grid) and (v[1] <= start[1] + grid))):
-               g.add_edge(start, v)
-        elif(((v[0] >= end[0] - grid) and (v[0] <= end[0] + grid)) and
-           ((v[1] >= end[1] - grid) and (v[1] <= end[1] + grid))):
-               g.add_edge(end, v)
-
-
-    for r in range(0, rows):
-        y = r * grid
-        for c in range(0, columns):
-            x = 72 + c * grid
-            if(((x >= start[0] - grid) and (x <= start[0] + grid)) and
-               ((y >= start[1] - grid) and (y <= start[1] + grid))):
-               g.add_edge(start, (x,y))
-
-            elif(((x >= end[0] - grid) and (x <= end[0] + grid)) and
-               ((y >= end[1] - grid) and (y <= end[1] + grid))):
-               g.add_edge(end, (x,y))
-    """
 
     for v in vertices:
         for n in vertices:
@@ -134,15 +89,9 @@ def decomp(start, end, obstacles):
     for e in edges:
         g.add_edge(e[0], e[1])
 
-    print(vertices)
-    print("")
-    print("")
-    print(edges)
-    print("")
-    print("")
-    #print(edges)
-    print(nx.shortest_path(g, source = start, target = end))
-    print("end decomp")
+    global path
+    path = nx.shortest_path(g, source = start, target = end)
+    print("end decomp 2")
 
 
 def initialize():
@@ -224,8 +173,14 @@ if __name__ == "__main__":
             elif event.type == pg.MOUSEBUTTONUP:
                 if run.collidepoint(mouse_pos):
                     selected_index = 0
-                    decomp(start_pos, end_pos, obstacles)
-                    #find_path(surface)
+                    decomp(surface, start_pos, end_pos, obstacles)
+                    if (len(endpoints) == 2):
+                        if (startpoint.is_start == True for startpoint in endpoints):
+                            start = [startpoint for startpoint in endpoints if startpoint.is_start == True]
+                            if (endpoint.is_start == False for endpoint in endpoints):
+                                end = [endpoint for endpoint in endpoints if endpoint.is_start == False]
+                                draw_line(surface, start[0], end[0])
+                                has_path = True
 
                 elif start.collidepoint(mouse_pos):
                     if selected_index == 1:
@@ -338,6 +293,7 @@ if __name__ == "__main__":
                 transparent.fill((255, 255, 255, 128), None, pg.BLEND_RGBA_MULT)
                 image_rect = transparent.get_rect(center=mouse_pos)
                 selected_sprite = screen.blit(transparent, image_rect)
+        # if has_path:
 
         pg.display.flip()
         pg.display.update()
