@@ -3,7 +3,6 @@ import math
 import pygame as pg
 import numpy as np
 
-
 # set up the colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -28,6 +27,14 @@ class Obstacle():
         self.position = position
         self.size = size
         self.color = color
+    
+    #Should check if x is inside an obstacle
+    #returns true if inside obstacle, false otherwise. 
+    def isInObstacle(self, x, y):
+        if self.position[0] > x and  x < self.position[0]+self.size:
+            if self.position[1] > y and  y < self.position[1]+self.size:
+                return True
+        return False
 
 class Endpoint():
     def __init__(self, image, position, is_start):
@@ -40,33 +47,46 @@ def draw(surface, start, end):
     #changed it to black to better see the line.
 
 def dijsktra(graph, initial): #algorithm to adapt to our implementation
-  visited = {initial: 0}
-  path = {}
+    unvisited = []
+    w, h = pygame.display.get_surface().get_size()
+    for x in range (0,w):
+        for y in range(0,h):
+            valid = True
+            #ommiting obstacles from graph
+            for obstacle in obstacles:
+                if obstacle.isInObstacle(x,y):
+                    valid = False
+            if valid is True:
+                unvisited.append(pair(x,y))
+                
 
-  nodes = set(graph.nodes)
+    visited = {initial: 0}
+    path = {}
+    
+    nodes = set(graph.nodes)
 
-  while nodes:
-    min_node = None
-    for node in nodes:
-      if node in visited:
+    while nodes:
+        min_node = None
+        for node in nodes:
+            if node in visited:
+                if min_node is None:
+                    min_node = node
+                elif visited[node] < visited[min_node]:
+                    min_node = node
+
         if min_node is None:
-          min_node = node
-        elif visited[node] < visited[min_node]:
-          min_node = node
-
-    if min_node is None:
-      break
+            break
 
     nodes.remove(min_node)
     current_weight = visited[min_node]
 
     for edge in graph.edges[min_node]:
-      weight = current_weight + graph.distances[(min_node, edge)]
-      if edge not in visited or weight < visited[edge]:
-        visited[edge] = weight
-        path[edge] = min_node
+        weight = current_weight + graph.distances[(min_node, edge)]
+        if edge not in visited or weight < visited[edge]:
+            visited[edge] = weight
+            path[edge] = min_node
 
-  return visited, path
+    return visited, path
 
 def find_path(surface):
     if (len(endpoints) == 2):
