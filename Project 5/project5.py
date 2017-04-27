@@ -29,14 +29,6 @@ class Obstacle():
         self.size = size
         self.color = color
 
-    #Should check if x is inside an obstacle
-    #returns true if inside obstacle, false otherwise.
-    def isInObstacle(self, x, y):
-        if self.position[0] > x and  x < self.position[0]+self.size:
-            if self.position[1] > y and  y < self.position[1]+self.size:
-                return True
-        return False
-
 class Endpoint():
     def __init__(self, image, position, is_start):
         self.image = image
@@ -47,28 +39,69 @@ def draw(surface, start, end):
     pg.draw.line(surface, BLACK, start.position, end.position, 4)
     #changed it to black to better see the line.
 
-def decomp(start, end, obstacles):
-    print("Running Decomp")
-    print(start)
-    print(end)
-    rows = 100
-    columns = 100
-    grid = 5
+
+def find_path(surface, start, end, obstacles):
     vertices = []
     edges = []
     g = nx.Graph()
-    g.add_node(start)
-    g.add_node(end)
 
-    for r in range(0, rows):
-        y = r * 5
-        for c in range(0, columns):
-            x = 72 + c * 5
+    print("Running Decomp")
+    print(start)
+    print(end)
+
+    vertices.append(start)
+    vertices.append(end)
+
+    print(vertices)
+
+    for x in range(72,572):
+        for y in range(0,500):
             for o in obstacles:
                 if (((x <= o.position[0] - o.size[0]/2) or (x >= o.position[0] + o.size[0]/2)) and
                     ((y <= o.position[1] - o.size[1]/2) or (y >= o.position[1] + o.size[1]/2))):
                     vertices.append((x,y))
-                    g.add_node((x,y))
+
+    for v in vertices:
+        g.add_node(v)
+        for n in vertices:
+            if (((n[0] == (v[0] + 1)) and (n[1] == v[1])) or
+                ((n[0] == (v[0] - 1)) and (n[1] == v[1])) or
+                ((n[0] == v[0]) and (n[1] == (v[1] + 1))) or
+                ((n[0] == v[0]) and (n[1] == (v[1] - 1)))):
+                edges.append((v,n))
+                g.add_edge(v, n)
+
+    print(g.nodes())
+    print(g.neighbors(start))
+    #print(nx.shortest_path(g,source = start,target = end))
+    print("end decomp")
+
+def decomp(start, end, obstacles):
+    print("Running Decomp")
+    print(start)
+    print(end)
+    rows = 50
+    columns = 50
+    grid = 10
+    vertices = []
+    edges = []
+    g = nx.Graph()
+
+    vertices.append(start)
+    vertices.append(end)
+    
+    for r in range(0, rows):
+        y = r * grid
+        for c in range(0, columns):
+            x = 72 + c * grid
+            for o in obstacles:
+                if (((x <= o.position[0] - o.size[0]/2) or (x >= o.position[0] + o.size[0]/2)) and
+                    ((y <= o.position[1] - o.size[1]/2) or (y >= o.position[1] + o.size[1]/2))):
+                    vertices.append((x,y))
+
+    for v in vertices:
+        g.add_node(v)
+
     """
     for v in vertices:
         if(((v[0] >= start[0] - grid) and (v[0] <= start[0] + grid)) and
@@ -78,11 +111,11 @@ def decomp(start, end, obstacles):
            ((v[1] >= end[1] - grid) and (v[1] <= end[1] + grid))):
                g.add_edge(end, v)
 
-    """
+
     for r in range(0, rows):
-        y = r * 5
+        y = r * grid
         for c in range(0, columns):
-            x = 72 + c * 5
+            x = 72 + c * grid
             if(((x >= start[0] - grid) and (x <= start[0] + grid)) and
                ((y >= start[1] - grid) and (y <= start[1] + grid))):
                g.add_edge(start, (x,y))
@@ -90,57 +123,27 @@ def decomp(start, end, obstacles):
             elif(((x >= end[0] - grid) and (x <= end[0] + grid)) and
                ((y >= end[1] - grid) and (y <= end[1] + grid))):
                g.add_edge(end, (x,y))
+    """
 
     for v in vertices:
         for n in vertices:
-            if (((n[0] == (v[0] + grid)) and (n[1] == v[1])) or
-                ((n[0] == (v[0] - grid)) and (n[1] == v[1])) or
-                ((n[0] == v[0]) and (n[1] == (v[1] + grid))) or
-                ((n[0] == v[0]) and (n[1] == (v[1] - grid)))):
+            if(((n[0] <= (v[0] + grid)) and (n[0] >= (v[0] - grid))) and
+                ((n[1] <= (v[1] + grid)) and (n[1] >= (v[1] - grid)))):
                 edges.append((v,n))
-                g.add_edge(v, n)
-    
-    print(nx.shortest_path(g,start,vertices[12]))
+
+    for e in edges:
+        g.add_edge(e[0], e[1])
+
+    print(vertices)
+    print("")
+    print("")
+    print(edges)
+    print("")
+    print("")
+    #print(edges)
+    print(nx.shortest_path(g, source = start, target = end))
     print("end decomp")
 
-def dijsktra(graph, initial): #algorithm to adapt to our implementation
-    unvisited = []
-
-    visited = {initial: 0}
-    path = {}
-
-    nodes = set(graph.nodes)
-
-    while nodes:
-        min_node = None
-        for node in nodes:
-            if node in visited:
-                if min_node is None:
-                    min_node = node
-                elif visited[node] < visited[min_node]:
-                    min_node = node
-
-        if min_node is None:
-            break
-
-    nodes.remove(min_node)
-    current_weight = visited[min_node]
-
-    for edge in graph.edges[min_node]:
-        weight = current_weight + graph.distances[(min_node, edge)]
-        if edge not in visited or weight < visited[edge]:
-            visited[edge] = weight
-            path[edge] = min_node
-
-    return visited, path
-
-def find_path(surface):
-    if (len(endpoints) == 2):
-        if (startpoint.is_start == True for startpoint in endpoints):
-            start = [startpoint for startpoint in endpoints if startpoint.is_start == True]
-            if (endpoint.is_start == False for endpoint in endpoints):
-                end = [endpoint for endpoint in endpoints if endpoint.is_start == False]
-                draw(surface, start[0], end[0])
 
 def initialize():
     run = pg.image.load("images/run.png").convert_alpha()
